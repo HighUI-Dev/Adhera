@@ -1,0 +1,34 @@
+name: adhera
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  add_2_calendar_new: ^1.0.4
+  cloud_firestore: ^6.3.0
+  dashed_progress_bar: ^0.0.1
+  firebase_auth: ^6.4.0
+  firebase_core: ^4.7.0
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^19.4.1
+  flutter_localizations:
+    sdk: flutter
+  flutter_timezone: ^4.1.1
+  fluttertoast: ^9.0.0
+  font_awesome_flutter: ^11.0.0
+  gpassword: ^1.0.0
+  intl: ^0.20.2
+  progress_circle: ^1.2.0
+  timezone: ^0.10.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
