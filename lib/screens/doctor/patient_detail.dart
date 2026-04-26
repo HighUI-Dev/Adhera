@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:adhera/services/localization_service.dart';
 import 'models.dart';
 
 class PatientDetailPage extends StatefulWidget {
@@ -16,6 +18,46 @@ class PatientDetailPage extends StatefulWidget {
 class _PatientDetailPageState extends State<PatientDetailPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime? _patientTreatmentStart;
+  String? _patientPhoneNumber;
+
+  String _formatLocalizedAppointmentDate(DateTime dateTime) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
+  }
+
+  Future<void> _callPatient() async {
+    if (_patientPhoneNumber == null || _patientPhoneNumber!.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Phone number not available')),
+        );
+      }
+      return;
+    }
+
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: _patientPhoneNumber,
+    );
+
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch phone app')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +68,12 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          if (_patientPhoneNumber != null && _patientPhoneNumber!.isNotEmpty)
+            IconButton(
+              tooltip: 'Call patient',
+              onPressed: _callPatient,
+              icon: const FaIcon(FontAwesomeIcons.phone, size: 20),
+            ),
           IconButton(
             tooltip: 'Add appointment',
             onPressed: _showAddAppointmentDialog,
@@ -53,8 +101,9 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             snapshot.data!.data() as Map<String, dynamic>,
           );
 
-          // Store treatment start date for calendar
+          // Store treatment start date and phone number for later use
           _patientTreatmentStart = patientData.treatmentStartDate;
+          _patientPhoneNumber = patientData.phoneNumber;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -67,6 +116,10 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
 
                 // Key metrics
                 _buildKeyMetrics(patientData),
+                const SizedBox(height: 24),
+
+                // Weight changes
+                _buildRecentWeightChangesSection(),
                 const SizedBox(height: 24),
 
                 // Missed doses calendar (180 days)
@@ -141,6 +194,13 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                     const SizedBox(height: 4),
                     Text(
                       'Patient ID: ${patient.id}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer.withOpacity(0.78),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Phone: ${patient.phoneNumber?.isNotEmpty ?? false ? patient.phoneNumber : 'Unavailable'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimaryContainer.withOpacity(0.78),
                       ),
@@ -479,6 +539,117 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
         ),
       ],
     );
+  }
+
+  Widget _buildRecentWeightChangesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.t('recent_weight_changes'),
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 12),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _firestore
+                  .collection('users')
+                  .doc(widget.patientUid)
+                  .collection('weightLogs')
+                  .orderBy('recordedAt', descending: true)
+                  .limit(8)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final entries = snapshot.data?.docs
+                        .map((doc) => WeightLogEntry.fromMap(doc.id, doc.data()))
+                        .where((entry) => entry.weight > 0)
+                        .toList() ??
+                    [];
+
+                if (entries.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        context.t('no_weight_logs'),
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: entries.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final hasPrevious = index < entries.length - 1;
+                    final delta = hasPrevious ? item.weight - entries[index + 1].weight : null;
+                    final deltaColor = delta == null
+                        ? Colors.grey[600]
+                        : delta > 0
+                            ? Colors.green[700]
+                            : delta < 0
+                                ? Colors.red[700]
+                                : Colors.grey[700];
+
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: index == entries.length - 1 ? 0 : 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat('dd MMM yyyy').format(item.recordedAt),
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                if (delta != null)
+                                  Text(
+                                    delta == 0
+                                        ? context.t('no_change')
+                                        : '${delta > 0 ? '+' : ''}${delta.toStringAsFixed(1)} ${context.t('kg_unit')}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: deltaColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${_formatWeightValue(item.weight)} ${context.t('kg_unit')}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatWeightValue(double weight) {
+    return weight % 1 == 0 ? weight.toInt().toString() : weight.toStringAsFixed(1);
   }
 
   Widget _build180DayCalendar(List<DoseLogData> doseLogs) {
@@ -912,8 +1083,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          DateFormat('EEE, MMM d, yyyy • h:mm a')
-                              .format(appointment.dateTime),
+                          _formatLocalizedAppointmentDate(appointment.dateTime),
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 13,
@@ -994,6 +1164,11 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
   final _notesController = TextEditingController();
   DateTime _selectedDateTime = DateTime.now().add(const Duration(hours: 1));
   bool _isSaving = false;
+
+  String _formatLocalizedAppointmentDate(DateTime dateTime) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
+  }
 
   @override
   void dispose() {
@@ -1133,7 +1308,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(DateFormat('EEE, MMM d, yyyy • h:mm a').format(_selectedDateTime)),
+                      Text(_formatLocalizedAppointmentDate(_selectedDateTime)),
                       const Icon(Icons.calendar_today_outlined),
                     ],
                   ),
@@ -1814,3 +1989,4 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
     );
   }
 }
+

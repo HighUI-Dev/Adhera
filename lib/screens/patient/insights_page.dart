@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/localization_service.dart';
 
 class InsightsPage extends StatelessWidget {
   const InsightsPage({super.key});
@@ -11,8 +12,8 @@ class InsightsPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view insights.')),
+      return Scaffold(
+        body: Center(child: Text(context.t('please_sign_in'))),
       );
     }
 
@@ -61,13 +62,13 @@ class InsightsPage extends StatelessWidget {
                     children: [
                       const SizedBox(height: 16),
                       Text(
-                        'Insights',
+                        context.t('insights'),
                         style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Day ${metrics.daysIntoTreatment} of 180',
+                        "${context.t('day')} ${metrics.daysIntoTreatment}${context.t('of_180')}",
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -83,28 +84,28 @@ class InsightsPage extends StatelessWidget {
                         children: [
                           _buildStatCard(
                             context,
-                            label: 'Adherence (30d)',
+                            label: context.t('adherence_30d'),
                             value: '${metrics.adherence30dPercent}%',
                             icon: Icons.insights_outlined,
                             color: Colors.blue,
                           ),
                           _buildStatCard(
                             context,
-                            label: 'Overall Adherence',
+                            label: context.t('overall_adherence'),
                             value: '${metrics.overallAdherencePercent}%',
                             icon: Icons.show_chart_outlined,
                             color: Colors.teal,
                           ),
                           _buildStatCard(
                             context,
-                            label: 'Current Streak',
-                            value: '${metrics.currentStreak} days',
+                            label: context.t('current_streak'),
+                            value: '${metrics.currentStreak} ${context.t('days')}',
                             icon: Icons.local_fire_department_outlined,
                             color: Colors.orange,
                           ),
                           _buildStatCard(
                             context,
-                            label: 'Missed Doses (30d)',
+                            label: context.t('missed_doses_30d'),
                             value: '${metrics.missedDoses30d}',
                             icon: Icons.event_busy_outlined,
                             color: Colors.red,
@@ -113,14 +114,14 @@ class InsightsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Phase Progress',
+                        context.t('phase_progress'),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       _buildPhaseProgressCard(
                         context,
-                        phaseName: 'Intensive Phase',
+                        phaseName: context.t('intensive_phase'),
                         completed: metrics.daysIntoTreatment,
                         total: 60,
                         color: Colors.amber,
@@ -128,7 +129,7 @@ class InsightsPage extends StatelessWidget {
                       const SizedBox(height: 12),
                       _buildPhaseProgressCard(
                         context,
-                        phaseName: 'Continuation Phase',
+                        phaseName: context.t('continuation_phase'),
                         completed: (metrics.daysIntoTreatment - 60).clamp(
                           0,
                           120,
@@ -324,7 +325,7 @@ class InsightsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$displayedCompleted / $total days',
+                        '$displayedCompleted / $total ${context.t('days')}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

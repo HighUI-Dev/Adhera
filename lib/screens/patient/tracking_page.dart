@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/screens/doctor/models.dart';
+import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/notification_service.dart';
 
 import 'settings_page.dart';
+import 'tracking_simple_mode.dart';
 
 class TrackingPage extends StatefulWidget {
   const TrackingPage({super.key});
@@ -27,10 +29,47 @@ class _TrackingPageState extends State<TrackingPage> {
   bool _isLoading = true;
   bool _yesterdayDialogShown = false;
   bool _appointmentDialogShown = false;
+  bool _useSimpleMode = false;
 
   @override
   void initState() {
     super.initState();
+    _checkSimpleMode();
+  }
+
+  Future<void> _checkSimpleMode() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final useSimpleMode = userDoc['useSimpleMode'] ?? false;
+          if (mounted) {
+            setState(() {
+              _useSimpleMode = useSimpleMode;
+            });
+
+            if (useSimpleMode) {
+              // Navigate to simple mode
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const TrackingSimpleMode(),
+                ),
+              );
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error checking simple mode: $e');
+    }
+
+    // Continue with normal loading
     _fetchTreatmentStartDate();
   }
 
@@ -242,7 +281,11 @@ class _TrackingPageState extends State<TrackingPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving dose log: $e')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text("${context.t('error_saving_dose_log')}: $e"),
+          ),
+        );
       }
     }
   }
@@ -271,7 +314,11 @@ class _TrackingPageState extends State<TrackingPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error reverting choice: $e')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text("${context.t('error_reverting_choice')}: $e"),
+          ),
+        );
       }
     }
   }
@@ -375,7 +422,7 @@ class _TrackingPageState extends State<TrackingPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text('Upcoming Appointment'),
+          title: Text(context.t('upcoming_appointment')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,18 +433,14 @@ class _TrackingPageState extends State<TrackingPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                DateFormat(
-                  'EEE, MMM d, yyyy • h:mm a',
-                ).format(appointment.dateTime),
+                _formatAppointmentDate(appointment.dateTime),
               ),
               if (appointment.notes.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(appointment.notes.trim()),
               ],
               const SizedBox(height: 12),
-              const Text(
-                'Would you like to add this appointment to your phone calendar?',
-              ),
+              Text(context.t('add_appointment_to_phone_calendar_prompt')),
             ],
           ),
           actions: [
@@ -406,7 +449,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 Navigator.pop(context);
                 await _addAppointmentToCalendar(appointment);
               },
-              child: const Text('Add'),
+              child: Text(context.t('add')),
             ),
           ],
         );
@@ -430,8 +473,8 @@ class _TrackingPageState extends State<TrackingPage> {
       if (!added) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Appointment was not added to the calendar yet'),
+            SnackBar(
+              content: Text(context.t('appointment_not_added_to_calendar')),
             ),
           );
         }
@@ -452,13 +495,15 @@ class _TrackingPageState extends State<TrackingPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appointment sent to calendar')),
+          SnackBar(content: Text(context.t('appointment_sent_to_calendar'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add appointment to calendar: $e')),
+          SnackBar(
+            content: Text("${context.t('failed_to_add_appointment')}: $e"),
+          ),
         );
       }
     }
@@ -475,24 +520,22 @@ class _TrackingPageState extends State<TrackingPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text('Yesterday\'s Medication'),
-          content: const Text(
-            'Did you take your medication yesterday or did you miss it?',
-          ),
+          title: Text(context.t('yesterdays_medication')),
+          content: Text(context.t('did_you_take_yesterday_medication')),
           actions: [
             OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _updateYesterdayLog(true);
               },
-              child: const Text('Taken'),
+              child: Text(context.t('taken')),
             ),
             OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _updateYesterdayLog(false);
               },
-              child: const Text('Missed'),
+              child: Text(context.t('missed')),
             ),
           ],
         );
@@ -542,7 +585,9 @@ class _TrackingPageState extends State<TrackingPage> {
       print('Error updating yesterday log: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating yesterday log: $e')),
+          SnackBar(
+            content: Text("${context.t('error_updating_yesterday_log')}: $e"),
+          ),
         );
       }
     }
@@ -568,11 +613,15 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   String _getPhaseName() {
-    return _isIntensivePhase() ? 'Intensive Phase' : 'Continuation Phase';
+    return _isIntensivePhase()
+        ? context.t('intensive_phase')
+        : context.t('continuation_phase');
   }
 
   String _getPhaseLabel() {
-    return _isIntensivePhase() ? 'ERIP - 2 months' : 'RI - 4 months';
+    return _isIntensivePhase()
+        ? context.t('erip_2_months')
+        : context.t('ri_4_months');
   }
 
   Color _getPhaseColor() {
@@ -584,12 +633,12 @@ class _TrackingPageState extends State<TrackingPage> {
     final suffix = _patientFirstName.isEmpty ? '' : ' $_patientFirstName';
 
     if (hour >= 5 && hour < 12) {
-      return 'Good morning$suffix';
+      return "${context.t('good_morning')}$suffix";
     }
     if (hour >= 12 && hour < 17) {
-      return 'Good afternoon$suffix';
+      return "${context.t('good_afternoon')}$suffix";
     }
-    return 'Good evening$suffix';
+    return "${context.t('good_evening')}$suffix";
   }
 
   String _getTodayDate() {
@@ -607,7 +656,44 @@ class _TrackingPageState extends State<TrackingPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error logging out: $e')));
+        ).showSnackBar(
+          SnackBar(content: Text("${context.t('error_logging_out')}: $e")),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleSimpleMode(bool enable) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'useSimpleMode': enable});
+
+        if (mounted) {
+          setState(() {
+            _useSimpleMode = enable;
+          });
+
+          if (enable) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const TrackingSimpleMode(),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error toggling simple mode: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${context.t('error_toggling_simple_mode')}: $e"),
+          ),
+        );
       }
     }
   }
@@ -621,7 +707,8 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   String _formatAppointmentDate(DateTime dateTime) {
-    return DateFormat('EEE, MMM d, yyyy • h:mm a').format(dateTime);
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
   }
 
   Widget _buildMedicationItem(Medication medication) {
@@ -663,7 +750,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  details.join(' • '),
+                  details.join(' - '),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -725,18 +812,24 @@ class _TrackingPageState extends State<TrackingPage> {
                                   builder: (context) => const SettingsPage(),
                                 ),
                               );
+                            } else if (value == 'simple_mode') {
+                              _toggleSimpleMode(true);
                             } else if (value == 'logout') {
                               _logout();
                             }
                           },
-                          itemBuilder: (context) => const [
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'simple_mode',
+                              child: Text(context.t('simple_mode')),
+                            ),
                             PopupMenuItem(
                               value: 'settings',
-                              child: Text('Settings'),
+                              child: Text(context.t('settings')),
                             ),
                             PopupMenuItem(
                               value: 'logout',
-                              child: Text('Logout'),
+                              child: Text(context.t('sign_out')),
                             ),
                           ],
                         ),
@@ -750,7 +843,7 @@ class _TrackingPageState extends State<TrackingPage> {
                         Expanded(
                           child: _buildMetricCard(
                             context,
-                            label: 'Today\'s Dose',
+                            label: context.t('todays_dose'),
                             value:
                                 '${_getCompletedMedications()}/${_getTotalMedications()}',
                             icon: Icons.check_circle_outline,
@@ -761,7 +854,7 @@ class _TrackingPageState extends State<TrackingPage> {
                         Expanded(
                           child: _buildMetricCard(
                             context,
-                            label: 'Current Streak',
+                            label: context.t('current_streak'),
                             value: '${_streak}d',
                             icon: Icons.local_fire_department_outlined,
                             color: Colors.orange,
@@ -845,7 +938,7 @@ class _TrackingPageState extends State<TrackingPage> {
               Expanded(
                 child: _buildHeroStat(
                   context,
-                  label: 'Day',
+                  label: context.t('day'),
                   value: '${_getDaysIntoTreatment()}',
                 ),
               ),
@@ -853,7 +946,7 @@ class _TrackingPageState extends State<TrackingPage> {
               Expanded(
                 child: _buildHeroStat(
                   context,
-                  label: 'Days Left',
+                  label: context.t('days_left'),
                   value: '${_getDaysLeft()}',
                 ),
               ),
@@ -981,7 +1074,7 @@ class _TrackingPageState extends State<TrackingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Today\'s Medication',
+                        context.t('todays_medication'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -989,8 +1082,8 @@ class _TrackingPageState extends State<TrackingPage> {
                       const SizedBox(height: 2),
                       Text(
                         _todayMedications.isEmpty
-                            ? 'No active medications scheduled today'
-                            : '${_todayMedications.length} medication${_todayMedications.length == 1 ? '' : 's'} scheduled',
+                            ? context.t('no_active_medications_scheduled_today')
+                            : "${_todayMedications.length} ${_todayMedications.length == 1 ? context.t('medication_scheduled_singular') : context.t('medication_scheduled_plural')}",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -1034,7 +1127,7 @@ class _TrackingPageState extends State<TrackingPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No active medications for today.',
+                  context.t('no_active_medications_for_today'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -1051,7 +1144,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 child: FilledButton.icon(
                   onPressed: () => _saveDoseLog(true),
                   icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Mark as Taken'),
+                  label: Text(context.t('mark_taken')),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.green,
@@ -1075,7 +1168,7 @@ class _TrackingPageState extends State<TrackingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Marked as taken for today',
+                            context.t('marked_as_taken_for_today'),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: Colors.green.shade700,
@@ -1091,7 +1184,7 @@ class _TrackingPageState extends State<TrackingPage> {
                     child: OutlinedButton.icon(
                       onPressed: _revertChoice,
                       icon: const Icon(Icons.undo),
-                      label: const Text('Revert Choice'),
+                      label: Text(context.t('revert_choice')),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -1141,7 +1234,7 @@ class _TrackingPageState extends State<TrackingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Appointments',
+                        context.t('appointments'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -1149,8 +1242,8 @@ class _TrackingPageState extends State<TrackingPage> {
                       const SizedBox(height: 2),
                       Text(
                         _appointments.isEmpty
-                            ? 'No appointments scheduled'
-                            : '${_appointments.length} appointment${_appointments.length == 1 ? '' : 's'} available',
+                            ? context.t('no_appointments_scheduled')
+                            : "${_appointments.length} ${_appointments.length == 1 ? context.t('appointment_available_singular') : context.t('appointment_available_plural')}",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -1163,7 +1256,7 @@ class _TrackingPageState extends State<TrackingPage> {
             const SizedBox(height: 16),
             if (_appointments.isEmpty)
               Text(
-                'Your doctor has not added any appointments yet.',
+                context.t('doctor_has_not_added_appointments'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -1212,8 +1305,8 @@ class _TrackingPageState extends State<TrackingPage> {
                                   ),
                                   child: Text(
                                     appointment.addedToCalendar
-                                        ? 'In calendar'
-                                        : 'Needs add',
+                                        ? context.t('in_calendar')
+                                        : context.t('needs_add'),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       color: appointment.addedToCalendar
@@ -1248,7 +1341,7 @@ class _TrackingPageState extends State<TrackingPage> {
                                 icon: const Icon(
                                   Icons.event_available_outlined,
                                 ),
-                                label: const Text('Add to Calendar'),
+                                label: Text(context.t('add_to_calendar')),
                               ),
                             ),
                           ],
@@ -1264,3 +1357,8 @@ class _TrackingPageState extends State<TrackingPage> {
     );
   }
 }
+
+
+
+
+

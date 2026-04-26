@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/localization_service.dart';
 
 class SymptomsPage extends StatefulWidget {
   const SymptomsPage({super.key});
@@ -20,7 +21,7 @@ class _SymptomsPageState extends State<SymptomsPage> {
     return Scaffold(
       body: SafeArea(
         child: user == null
-            ? const Center(child: Text('Please log in'))
+            ? Center(child: Text(context.t('please_log_in')))
             : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance
                     .collection('users')
@@ -51,14 +52,14 @@ class _SymptomsPageState extends State<SymptomsPage> {
                             children: [
                               const SizedBox(height: 16),
                               Text(
-                                'Symptoms',
+                                context.t('symptoms'),
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${logs.length} ${logs.length == 1 ? 'entry' : 'entries'}',
+                                '${logs.length} ${logs.length == 1 ? context.t('entry') : context.t('entries')}',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -107,14 +108,14 @@ class _SymptomsPageState extends State<SymptomsPage> {
         children: [
           const SizedBox(height: 16),
           Text(
-            'Symptoms',
+            context.t('symptoms'),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'No entries yet',
+            context.t('no_entries_yet'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -145,14 +146,14 @@ class _SymptomsPageState extends State<SymptomsPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No symptoms logged yet',
+                    context.t('no_symptoms_logged_yet'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the add button to record how you are feeling today.',
+                    context.t('tap_add_to_record_symptoms'),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
@@ -215,7 +216,7 @@ class _SymptomsPageState extends State<SymptomsPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${symptoms.length} ${symptoms.length == 1 ? 'symptom' : 'symptoms'} logged',
+                        '${symptoms.length} ${context.t('symptoms_logged')}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -261,7 +262,7 @@ class _SymptomsPageState extends State<SymptomsPage> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          symptom,
+                          context.t(_normalizeSymptomKey(symptom)),
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.primary,
@@ -278,7 +279,7 @@ class _SymptomsPageState extends State<SymptomsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Notes',
+                    context.t('notes'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colorScheme.onSurfaceVariant,
@@ -302,9 +303,27 @@ class _SymptomsPageState extends State<SymptomsPage> {
   }
 
   String _getSeverityLabel(int severity) {
-    if (severity <= 3) return 'Mild';
-    if (severity <= 6) return 'Moderate';
-    return 'Severe';
+    if (severity <= 3) return context.t('mild');
+    if (severity <= 6) return context.t('moderate');
+    return context.t('severe');
+  }
+
+  String _normalizeSymptomKey(String symptom) {
+    final normalized = symptom.trim().toLowerCase();
+    const map = <String, String>{
+      'nausea': 'nausea',
+      'cough': 'cough',
+      'vomiting': 'vomiting',
+      'fever': 'fever',
+      'fatigue': 'fatigue',
+      'chest pain': 'chest_pain',
+      'shortness of breath': 'shortness_of_breath',
+      'night sweats': 'night_sweats',
+      'chest_pain': 'chest_pain',
+      'shortness_of_breath': 'shortness_of_breath',
+      'night_sweats': 'night_sweats',
+    };
+    return map[normalized] ?? symptom;
   }
 
   void _showEntryDialog(BuildContext context) {
@@ -318,21 +337,24 @@ class _SymptomsPageState extends State<SymptomsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Entry?'),
-        content: const Text(
-          'Are you sure you want to delete this symptom log?',
+        title: Text(context.t('delete_entry')),
+        content: Text(
+          context.t('delete_symptom_message'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.t('cancel')),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _deleteSymptomLog(docId);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              context.t('delete'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -354,13 +376,15 @@ class _SymptomsPageState extends State<SymptomsPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Symptom log deleted')));
+        ).showSnackBar(SnackBar(content: Text(context.t('symptom_log_deleted'))));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting log: $e')));
+        ).showSnackBar(
+          SnackBar(content: Text("${context.t('error_deleting_log')}: $e")),
+        );
       }
     }
   }
@@ -375,14 +399,14 @@ class SymptomEntryDialog extends StatefulWidget {
 
 class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
   static const List<String> availableSymptoms = [
-    'Nausea',
-    'Cough',
-    'Vomiting',
-    'Fever',
-    'Fatigue',
-    'Chest pain',
-    'Shortness of breath',
-    'Night sweats',
+    'nausea',
+    'cough',
+    'vomiting',
+    'fever',
+    'fatigue',
+    'chest_pain',
+    'shortness_of_breath',
+    'night_sweats',
   ];
 
   late DateTime selectedDate;
@@ -406,7 +430,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       title: Text(
-        'Log Symptoms',
+        context.t('log_symptoms'),
         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
@@ -440,7 +464,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Select Symptoms',
+              context.t('select_symptoms'),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -452,7 +476,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
               children: availableSymptoms
                   .map(
                     (symptom) => ChoiceChip(
-                      label: Text(symptom),
+                      label: Text(context.t(symptom)),
                       selected: selectedSymptoms.contains(symptom),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
@@ -473,7 +497,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Severity',
+              context.t('severity'),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -509,7 +533,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Notes (Optional)',
+              context.t('notes_optional'),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -518,7 +542,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
             TextField(
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Add any additional notes...',
+                hintText: context.t('add_notes'),
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.4),
                 border: OutlineInputBorder(
@@ -544,7 +568,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.t('cancel')),
         ),
         FilledButton(
           onPressed: _isLoading ? null : _saveSymptomLog,
@@ -554,7 +578,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(context.t('save')),
         ),
       ],
     );
@@ -580,7 +604,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
     if (user == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('User not logged in')));
+      ).showSnackBar(SnackBar(content: Text(context.t('user_not_logged_in'))));
       return;
     }
 
@@ -618,13 +642,15 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Symptom log saved')));
+        ).showSnackBar(SnackBar(content: Text(context.t('symptom_log_saved'))));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving log: $e')));
+        ).showSnackBar(
+          SnackBar(content: Text("${context.t('error_saving_log')}: $e")),
+        );
       }
     } finally {
       setState(() {
@@ -640,8 +666,8 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
   }
 
   String _getSeverityLabel(int severity) {
-    if (severity <= 3) return 'Mild';
-    if (severity <= 6) return 'Moderate';
-    return 'Severe';
+    if (severity <= 3) return context.t('mild');
+    if (severity <= 6) return context.t('moderate');
+    return context.t('severe');
   }
 }

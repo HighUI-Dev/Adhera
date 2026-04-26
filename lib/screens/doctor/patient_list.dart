@@ -406,6 +406,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _weightController;
+  late TextEditingController _phoneController;
 
   String _selectedSex = 'Male';
   DateTime _selectedStartDate = DateTime.now();
@@ -421,6 +422,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
     _nameController = TextEditingController();
     _ageController = TextEditingController();
     _weightController = TextEditingController();
+    _phoneController = TextEditingController();
   }
 
   @override
@@ -430,6 +432,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
     _nameController.dispose();
     _ageController.dispose();
     _weightController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -526,6 +529,18 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                       ),
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Name required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: InputDecoration(
+                        labelText: 'Phone Number',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        hintText: '+1234567890',
+                      ),
+                      keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -711,6 +726,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
         'role': 'patient',
         'name': _nameController.text,
         'email': _emailController.text.trim(),
+        'phoneNumber': _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
         'age': int.tryParse(_ageController.text),
         'sex': _selectedSex,
         'weight': double.tryParse(_weightController.text),

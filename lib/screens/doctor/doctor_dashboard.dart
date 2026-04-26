@@ -4,6 +4,7 @@ import 'patient_list.dart';
 import 'alerts_page.dart';
 import 'profile_page.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/localization_service.dart';
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -39,13 +40,20 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         body: IndexedStack(index: _selectedIndex, children: _pages),
         bottomNavigationBar: NavigationBar(
           height: 78,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.people), label: 'Patients'),
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.notifications_rounded),
-              label: 'Alerts',
+              icon: const Icon(Icons.people),
+              label: context.t('patients'),
             ),
-            NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+            NavigationDestination(
+              icon: const Icon(Icons.notifications_rounded),
+              label: context.t('alerts'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person),
+              label: context.t('profile'),
+            ),
           ],
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
@@ -60,12 +68,12 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Exit App?'),
-          content: const Text('Are you sure you want to exit the app?'),
+          title: Text(context.t('exit_app')),
+          content: Text(context.t('exit_app_message')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.t('cancel')),
             ),
             TextButton(
               onPressed: () async {
@@ -76,7 +84,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                   Navigator.pushReplacementNamed(context, '/');
                 }
               },
-              child: const Text('Exit'),
+              child: Text(context.t('exit')),
             ),
           ],
         );

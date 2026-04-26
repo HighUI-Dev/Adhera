@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/localization_service.dart';
 import 'tracking_page.dart';
 import 'treatment_page.dart';
 import 'symptoms_page.dart';
@@ -72,23 +73,27 @@ class _PatientHomeState extends State<PatientHome> with WidgetsBindingObserver {
       child: Scaffold(
         body: IndexedStack(index: _selectedIndex, children: _pages),
         bottomNavigationBar: NavigationBar(
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home), label: 'Tracking'),
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: [
             NavigationDestination(
-              icon: FaIcon(FontAwesomeIcons.capsules, size: 22),
-              label: 'Treatment',
+              icon: const Icon(Icons.home),
+              label: context.t('tracking'),
             ),
             NavigationDestination(
-              icon: FaIcon(FontAwesomeIcons.heartPulse, size: 22),
-              label: 'Symptoms',
+              icon: const FaIcon(FontAwesomeIcons.capsules, size: 22),
+              label: context.t('treatment'),
             ),
             NavigationDestination(
-              icon: Icon(Icons.insights),
-              label: 'Insights',
+              icon: const FaIcon(FontAwesomeIcons.heartPulse, size: 22),
+              label: context.t('symptoms'),
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_rounded),
-              label: 'Profile',
+              icon: const Icon(Icons.insights),
+              label: context.t('insights'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person_rounded),
+              label: context.t('profile'),
             ),
           ],
           selectedIndex: _selectedIndex,
@@ -103,12 +108,12 @@ class _PatientHomeState extends State<PatientHome> with WidgetsBindingObserver {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exit App?'),
-          content: const Text('Are you sure you want to exit the app?'),
+          title: Text(context.t('exit_app')),
+          content: Text(context.t('exit_app_message')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.t('cancel')),
             ),
             TextButton(
               onPressed: () {
@@ -120,7 +125,7 @@ class _PatientHomeState extends State<PatientHome> with WidgetsBindingObserver {
                   exit(0);
                 }
               },
-              child: const Text('Exit'),
+              child: Text(context.t('exit')),
             ),
           ],
         );

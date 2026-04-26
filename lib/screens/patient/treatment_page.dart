@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/localization_service.dart';
 
 class TreatmentPage extends StatefulWidget {
   const TreatmentPage({super.key});
@@ -130,7 +131,9 @@ class _TreatmentPageState extends State<TreatmentPage>
   }
 
   String _getMedicationName(int dayNumber) {
-    return _isIntensivePhase(dayNumber) ? 'ERIP-K4' : 'RINIAZIDE';
+    return _isIntensivePhase(dayNumber)
+        ? context.t('erip_k4')
+        : context.t('riniazide');
   }
 
   bool _isMedicationTaken(DateTime date) {
@@ -176,15 +179,15 @@ class _TreatmentPageState extends State<TreatmentPage>
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Treatment',
+        title: Text(
+          context.t('treatment'),
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Calendar'),
-            Tab(text: 'Protocol'),
+          tabs: [
+            Tab(text: context.t('calendar')),
+            Tab(text: context.t('protocol')),
           ],
         ),
       ),
@@ -232,14 +235,14 @@ class _TreatmentPageState extends State<TreatmentPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Treatment Calendar',
+              context.t('treatment_calendar'),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Track each day of your treatment journey and quickly find today.',
+              context.t('track_treatment_journey'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -250,7 +253,7 @@ class _TreatmentPageState extends State<TreatmentPage>
                 Expanded(
                   child: _buildSummaryMetric(
                     context,
-                    label: 'Day',
+                    label: context.t('day'),
                     value: '$daysIntoTreatment',
                     icon: Icons.today_outlined,
                     color: Colors.amber,
@@ -260,7 +263,7 @@ class _TreatmentPageState extends State<TreatmentPage>
                 Expanded(
                   child: _buildSummaryMetric(
                     context,
-                    label: 'Remaining',
+                    label: context.t('remaining'),
                     value: '$daysRemaining',
                     icon: Icons.timelapse_outlined,
                     color: Colors.teal,
@@ -393,7 +396,7 @@ class _TreatmentPageState extends State<TreatmentPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Day $dayNumber',
+                        '${context.t('day')} $dayNumber',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -417,7 +420,7 @@ class _TreatmentPageState extends State<TreatmentPage>
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            'Today',
+                            context.t('today'),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.amber.shade900,
                               fontWeight: FontWeight.w700,
@@ -452,7 +455,7 @@ class _TreatmentPageState extends State<TreatmentPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Daily Timeline',
+          context.t('daily_timeline'),
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -472,73 +475,69 @@ class _TreatmentPageState extends State<TreatmentPage>
           _buildTimelineContainer(),
           const SizedBox(height: 16),
           _buildEducationalPhaseCard(
-            title: 'Phase 1 - Intensive (First 2 months)',
-            goal:
-                'Quickly reduce the number of tuberculosis bacteria in your body.',
+            title: context.t('phase_1_intensive'),
+            goal: context.t('phase_1_goal'),
             accentColor: Colors.amber,
             backgroundColor: const Color(0xfffceed9),
-            sections: const [
+            sections: [
               (
-                'What this means for you',
+                context.t('what_this_means_for_you'),
                 [
-                  'You may start to feel better during this phase',
-                  'Symptoms like cough, fever, and fatigue often improve',
-                  'Even if you feel better, treatment must continue',
+                  context.t('phase_1_feel_better'),
+                  context.t('phase_1_symptoms_improve'),
+                  context.t('phase_1_treatment_must_continue'),
                 ],
               ),
               (
-                'Why multiple medications?',
+                context.t('why_multiple_medications'),
                 [
-                  'They kill bacteria faster',
-                  'They help prevent the bacteria from becoming resistant',
-                  'They increase the chances of complete recovery',
+                  context.t('phase_1_kill_faster'),
+                  context.t('phase_1_prevent_resistance'),
+                  context.t('phase_1_complete_recovery'),
                 ],
               ),
               (
-                'What you may notice',
+                context.t('what_you_may_notice'),
                 [
-                  'Improvement in symptoms',
-                  'Possible side effects like nausea, fatigue, or orange urine with rifampicin',
+                  context.t('phase_1_improvement_in_symptoms'),
+                  context.t('phase_1_possible_side_effects'),
                 ],
               ),
             ],
-            importantNote:
-                'Do not skip doses. Missing doses in this phase increases the risk of resistance.',
+            importantNote: context.t('phase_1_important_note'),
           ),
           const SizedBox(height: 16),
           _buildEducationalPhaseCard(
-            title: 'Phase 2 - Continuation (Months 3-6)',
-            goal:
-                'Eliminate remaining bacteria and prevent the disease from coming back.',
+            title: context.t('phase_2_continuation'),
+            goal: context.t('phase_2_goal'),
             accentColor: Colors.green,
             backgroundColor: const Color(0xffd4f4dd),
-            sections: const [
+            sections: [
               (
-                'What this means for you',
+                context.t('what_this_means_for_you'),
                 [
-                  'You will usually feel much better',
-                  'There are fewer medications, but treatment is still essential',
-                  'This phase ensures complete cure, not just improvement',
+                  context.t('phase_2_feel_better'),
+                  context.t('phase_2_fewer_medications'),
+                  context.t('phase_2_complete_cure'),
                 ],
               ),
               (
-                'Why continue treatment?',
+                context.t('why_continue_treatment'),
                 [
-                  'Some bacteria remain in a slow or inactive state',
-                  'These bacteria are harder to kill',
-                  'They can cause relapse if treatment stops early',
+                  context.t('phase_2_bacteria_remain'),
+                  context.t('phase_2_harder_to_kill'),
+                  context.t('phase_2_relapse_if_stop_early'),
                 ],
               ),
               (
-                'What you may notice',
+                context.t('what_you_may_notice'),
                 [
-                  'Symptoms are mostly gone',
-                  'Your routine may feel easier because there are fewer pills',
+                  context.t('phase_2_symptoms_mostly_gone'),
+                  context.t('phase_2_routine_feels_easier'),
                 ],
               ),
             ],
-            importantNote:
-                'Stopping treatment early can lead to relapse and drug-resistant tuberculosis, which is much harder to treat.',
+            importantNote: context.t('phase_2_important_note'),
           ),
         ],
       ),
@@ -558,21 +557,24 @@ class _TreatmentPageState extends State<TreatmentPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your Treatment Timeline',
+              context.t('your_treatment_timeline'),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
-            _buildTimelineRow('Start date', _formatDate(_treatmentStartDate)),
+            _buildTimelineRow(
+              context.t('start_date'),
+              _formatDate(_treatmentStartDate),
+            ),
             const SizedBox(height: 12),
             _buildTimelineRow(
-              'Phase 2 begins',
+              context.t('phase_2_begins'),
               _formatDate(_getPhase2StartDate()),
             ),
             const SizedBox(height: 12),
             _buildTimelineRow(
-              'Expected end',
+              context.t('expected_end'),
               _formatDate(_getTreatmentEndDate()),
             ),
             const SizedBox(height: 18),
@@ -641,7 +643,7 @@ class _TreatmentPageState extends State<TreatmentPage>
             ),
             const SizedBox(height: 16),
             _buildEducationBlock(
-              title: 'Goal',
+              title: context.t('goal'),
               items: [goal],
               accentColor: accentColor,
             ),
@@ -673,7 +675,7 @@ class _TreatmentPageState extends State<TreatmentPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Important',
+                          context.t('important'),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -770,7 +772,7 @@ class _TreatmentPageState extends State<TreatmentPage>
 
   String _formatDate(DateTime? date) {
     if (date == null) {
-      return 'N/A';
+      return context.t('not_set');
     }
     return DateFormat('MMM d, yyyy').format(date);
   }

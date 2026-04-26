@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/locale_provider.dart';
-import 'package:adhera/screens/auth/auth_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -21,31 +19,52 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showLanguageDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: Text(context.t('language')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('English'),
-                onTap: () {
-                  _localeProvider.setLocale(const Locale('en'));
+                title: Text(context.t('english')),
+                onTap: () async {
+                  await _localeProvider.setLocale(const Locale('en'));
+                  if (!mounted) {
+                    return;
+                  }
                   setState(() {});
                   Navigator.pop(context);
                 },
                 selected: _localeProvider.locale.languageCode == 'en',
               ),
               ListTile(
-                title: const Text('Français'),
-                onTap: () {
-                  _localeProvider.setLocale(const Locale('fr'));
+                title: Text(context.t('french')),
+                onTap: () async {
+                  await _localeProvider.setLocale(const Locale('fr'));
+                  if (!mounted) {
+                    return;
+                  }
                   setState(() {});
                   Navigator.pop(context);
                 },
                 selected: _localeProvider.locale.languageCode == 'fr',
+              ),
+              ListTile(
+                title: Text(context.t('arabic')),
+                onTap: () async {
+                  await _localeProvider.setLocale(const Locale('ar'));
+                  if (!mounted) {
+                    return;
+                  }
+                  setState(() {});
+                  Navigator.pop(context);
+                },
+                selected: _localeProvider.locale.languageCode == 'ar',
               ),
             ],
           ),
@@ -54,94 +73,138 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Logout'),
-          content: Text(context.t('logout_message')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.t('cancel')),
-            ),
-            TextButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                if (mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/',
-                    (route) => false,
-                  );
-                }
-              },
-              child: Text(context.t('sign_out')),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                context.t('settings'),
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Language Setting
-              Card(
-                child: ListTile(
-                  title: Text(context.t('language')),
-                  subtitle: Text(
-                    _localeProvider.locale.languageCode == 'en'
-                        ? 'English'
-                        : 'Français',
+              Row(
+                children: [
+                  const BackButton(),
+                  const SizedBox(width: 6),
+                  Text(
+                    context.t('settings'),
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: _showLanguageDialog,
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primaryContainer,
+                      colorScheme.secondaryContainer,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onPrimaryContainer.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.language,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.t('language'),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            LocalizationService().getLanguageName(
+                              _localeProvider.locale.languageCode,
+                            ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onPrimaryContainer.withOpacity(
+                                0.78,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              // Sign Out
               Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 child: ListTile(
-                  title: Text(
-                    context.t('sign_out'),
-                    style: const TextStyle(color: Colors.red),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  trailing: const Icon(Icons.logout, color: Colors.red),
-                  onTap: _showLogoutDialog,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.translate, color: Colors.blue),
+                  ),
+                  title: Text(
+                    context.t('language'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    LocalizationService().getLanguageName(
+                      _localeProvider.locale.languageCode,
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: _showLanguageDialog,
                 ),
               ),
               const SizedBox(height: 24),
-              // About Section
               Text(
                 context.t('about'),
-                style: const TextStyle(
-                  fontSize: 16,
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Adhera v1.0.0',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

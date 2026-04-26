@@ -9,6 +9,7 @@ class PatientData {
   final int? age;
   final String? sex;
   final double? weight;
+  final String? phoneNumber;
 
   // Computed fields (calculated from doseLogs)
   late final double adherencePercentage;
@@ -25,6 +26,7 @@ class PatientData {
     this.age,
     this.sex,
     this.weight,
+    this.phoneNumber,
   });
 
   factory PatientData.fromMap(String uid, Map<String, dynamic> data) {
@@ -39,6 +41,7 @@ class PatientData {
       age: data['age'] as int?,
       sex: data['sex'] as String?,
       weight: (data['weight'] as num?)?.toDouble(),
+      phoneNumber: data['phoneNumber'] as String?,
     );
   }
 
@@ -153,6 +156,36 @@ class DoseLogData {
       missedTime: data['missedTime'] != null
           ? (data['missedTime'] as dynamic).toDate()
           : null,
+    );
+  }
+}
+
+class WeightLogEntry {
+  final String id;
+  final double weight;
+  final DateTime recordedAt;
+
+  WeightLogEntry({
+    required this.id,
+    required this.weight,
+    required this.recordedAt,
+  });
+
+  factory WeightLogEntry.fromMap(String id, Map<String, dynamic> data) {
+    final rawRecordedAt = data['recordedAt'];
+    final rawCreatedAt = data['createdAt'];
+
+    DateTime recordedAt = DateTime.now();
+    if (rawRecordedAt is Timestamp) {
+      recordedAt = rawRecordedAt.toDate();
+    } else if (rawCreatedAt is Timestamp) {
+      recordedAt = rawCreatedAt.toDate();
+    }
+
+    return WeightLogEntry(
+      id: id,
+      weight: (data['weight'] as num?)?.toDouble() ?? 0,
+      recordedAt: recordedAt,
     );
   }
 }
