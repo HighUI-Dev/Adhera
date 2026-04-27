@@ -73,50 +73,57 @@ class _AuthPageState extends State<AuthPage> {
 
   void _signIn() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      _signInWithCredentials(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+    }
+  }
 
-      try {
-        final email = _emailController.text;
-        final password = _passwordController.text;
+  Future<void> _signInWithCredentials({
+    required String email,
+    required String password,
+  }) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(email: email, password: password);
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
-        User? user = userCredential.user;
-        if (user != null) {
-          var doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      User? user = userCredential.user;
+      if (user != null) {
+        var doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-          String role = doc['role'];
+        String role = doc['role'];
 
-          if (role == "patient") {
-            await NotificationService.instance.syncForCurrentUser();
-            goToPatientHome();
-          } else {
-            await NotificationService.instance.cancelMedicationReminders();
-            goToDoctorDashboard();
-          }
+        if (role == "patient") {
+          await NotificationService.instance.syncForCurrentUser();
+          goToPatientHome();
+        } else {
+          await NotificationService.instance.cancelMedicationReminders();
+          goToDoctorDashboard();
         }
+      }
 
-        if (mounted) {
-          Fluttertoast.showToast(msg: context.t('successfully_signed_in'));
-        }
-      } catch (e) {
-        if (mounted) {
-          Fluttertoast.showToast(
-            msg: context.t('incorrect_credentials'),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      if (mounted) {
+        Fluttertoast.showToast(msg: context.t('successfully_signed_in'));
+      }
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: context.t('incorrect_credentials'),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -150,172 +157,296 @@ class _AuthPageState extends State<AuthPage> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 460),
-                  child: Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    color: colorScheme.surface.withOpacity(0.92),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: Icon(
-                                  Icons.local_hospital_rounded,
-                                  color: colorScheme.onPrimaryContainer,
-                                  size: 30,
-                                ),
-                              ),
-                              const Spacer(),
-                              PopupMenuButton<String>(
-                                tooltip: context.t('language'),
-                                onSelected: _setLanguage,
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: 'en',
-                                    child: Text(context.t('english')),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'fr',
-                                    child: Text(context.t('french')),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'ar',
-                                    child: Text(context.t('arabic')),
-                                  ),
-                                ],
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHighest
-                                        .withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.language, size: 18),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _localeProvider.locale.languageCode
-                                            .toUpperCase(),
-                                        style: theme.textTheme.labelLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            context.t('app_name'),
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            context.t('sign_in'),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                TextFormField(
-                                  controller: _emailController,
-                                  keyboardType: TextInputType.emailAddress,
-                                  decoration: _fieldDecoration(
-                                    context,
-                                    label: context.t('email'),
-                                    icon: Icons.email_outlined,
-                                  ),
-                                  validator: _validateEmail,
-                                ),
-                                const SizedBox(height: 14),
-                                TextFormField(
-                                  controller: _passwordController,
-                                  obscureText: _obscurePassword,
-                                  decoration: _fieldDecoration(
-                                    context,
-                                    label: context.t('password'),
-                                    icon: Icons.lock_outlined,
-                                  ).copyWith(
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _obscurePassword
-                                            ? Icons.visibility_outlined
-                                            : Icons.visibility_off_outlined,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _obscurePassword = !_obscurePassword;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  validator: _validatePassword,
-                                ),
-                                const SizedBox(height: 18),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 54,
-                                  child: FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                    onPressed: _isLoading ? null : _signIn,
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                                            ),
-                                          )
-                                        : Text(
-                                            context.t('sign_in_button'),
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLoginCard(context),
+                      const SizedBox(height: 14),
+                      _buildDemoLoginCard(context),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      color: colorScheme.surface.withOpacity(0.92),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(
+                    Icons.local_hospital_rounded,
+                    color: colorScheme.onPrimaryContainer,
+                    size: 30,
+                  ),
+                ),
+                const Spacer(),
+                PopupMenuButton<String>(
+                  tooltip: context.t('language'),
+                  onSelected: _setLanguage,
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'en',
+                      child: Text(context.t('english')),
+                    ),
+                    PopupMenuItem(
+                      value: 'fr',
+                      child: Text(context.t('french')),
+                    ),
+                    PopupMenuItem(
+                      value: 'ar',
+                      child: Text(context.t('arabic')),
+                    ),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.language, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          _localeProvider.locale.languageCode.toUpperCase(),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              context.t('app_name'),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              context.t('sign_in'),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: _fieldDecoration(
+                      context,
+                      label: context.t('email'),
+                      icon: Icons.email_outlined,
+                    ),
+                    validator: _validateEmail,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: _fieldDecoration(
+                      context,
+                      label: context.t('password'),
+                      icon: Icons.lock_outlined,
+                    ).copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: _isLoading ? null : _signIn,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              context.t('sign_in_button'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDemoLoginCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      color: colorScheme.surface.withOpacity(0.92),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.bolt_rounded,
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    context.t('demo_login'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isLoading
+                    ? null
+                    : () => _signInWithCredentials(
+                          email: 'test@gmail.com',
+                          password: 'test@123',
+                        ),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.medical_services_outlined),
+                label: Text(context.t('demo_doctor_login')),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _signInWithCredentials(
+                              email: 'patient1@gmail.com',
+                              password: 'patient1#',
+                            ),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(
+                        color: colorScheme.outlineVariant.withOpacity(0.6),
+                      ),
+                    ),
+                    icon: const Icon(Icons.person_outline),
+                    label: Text(context.t('demo_patient_1_login')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _signInWithCredentials(
+                              email: 'patient2@gmail.com',
+                              password: 'patient2#',
+                            ),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(
+                        color: colorScheme.outlineVariant.withOpacity(0.6),
+                      ),
+                    ),
+                    icon: const Icon(Icons.person_outline),
+                    label: Text(context.t('demo_patient_2_login')),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 
 import 'models.dart';
 
@@ -11,7 +12,6 @@ class ProfilePage extends StatefulWidget {
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
-
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,7 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
-          'Profile',
+          'Profil',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
@@ -37,7 +37,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildDoctorInfoSection(context, user),
             const SizedBox(height: 16),
             Text(
-              'Practice Overview',
+              'Aperçu du cabinet',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -111,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 6),
               Text(
-                user?.email ?? 'No email',
+                user?.email ?? 'Aucun e-mail',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onPrimaryContainer.withOpacity(0.78),
                 ),
@@ -119,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 14),
               Chip(
                 avatar: const Icon(Icons.local_hospital_outlined, size: 18),
-                label: const Text('Doctor'),
+                label: const Text('Médecin'),
                 backgroundColor: colorScheme.surface.withOpacity(0.7),
                 side: BorderSide.none,
               ),
@@ -141,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('Erreur: ${snapshot.error}'));
         }
 
         final stats = snapshot.data ??
@@ -158,8 +158,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 Expanded(
                   child: _buildStatCard(
                     context,
-                    label: 'Total Patients',
-                    value: '${stats['totalPatients']}',
+                    label: 'Nombre total de patients',
+                    value: convertArabicToWesternNumbers('${stats['totalPatients']}'),
                     color: Colors.blue,
                     icon: Icons.people_outline,
                   ),
@@ -168,8 +168,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 Expanded(
                   child: _buildStatCard(
                     context,
-                    label: 'Low Adherence',
-                    value: '${stats['lowAdherenceCount']}',
+                    label: 'Faible observance',
+                    value: convertArabicToWesternNumbers('${stats['lowAdherenceCount']}'),
                     color: Colors.orange,
                     icon: Icons.warning_amber_outlined,
                   ),
@@ -205,7 +205,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${stats['missedThisWeek']}',
+                            convertArabicToWesternNumbers('${stats['missedThisWeek']}'),
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.red,
@@ -213,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Patients with missed doses this week',
+                            'Patients avec des doses manquées cette semaine',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -285,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage> {
       child: FilledButton.icon(
         onPressed: _logout,
         icon: const Icon(Icons.logout),
-        label: const Text('Logout'),
+        label: const Text('Déconnexion'),
         style: FilledButton.styleFrom(
           backgroundColor: Colors.red[600],
           foregroundColor: Colors.white,
@@ -354,12 +354,12 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Logout?'),
-          content: const Text('Are you sure you want to logout?'),
+          title: const Text('Déconnexion ?'),
+          content: const Text('Voulez-vous vraiment vous déconnecter ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Annuler'),
             ),
             TextButton(
               onPressed: () async {
@@ -370,7 +370,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Navigator.pushReplacementNamed(context, '/');
                 }
               },
-              child: const Text('Logout', style: TextStyle(color: Colors.red)),
+              child: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
             ),
           ],
         );

@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:adhera/screens/doctor/models.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 
+import 'demo_notifications_page.dart';
 import 'settings_page.dart';
 import 'tracking_simple_mode.dart';
 
@@ -642,7 +644,10 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   String _getTodayDate() {
-    return DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now());
+    final locale = Localizations.localeOf(context).toString();
+    return convertArabicToWesternNumbers(
+      DateFormat('EEEE, MMMM d, yyyy', locale).format(DateTime.now()),
+    );
   }
 
   Future<void> _logout() async {
@@ -708,7 +713,7 @@ class _TrackingPageState extends State<TrackingPage> {
 
   String _formatAppointmentDate(DateTime dateTime) {
     final locale = Localizations.localeOf(context).toString();
-    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
+    return convertArabicToWesternNumbers(DateFormat.yMMMd(locale).add_jm().format(dateTime));
   }
 
   Widget _buildMedicationItem(Medication medication) {
@@ -814,6 +819,14 @@ class _TrackingPageState extends State<TrackingPage> {
                               );
                             } else if (value == 'simple_mode') {
                               _toggleSimpleMode(true);
+                            } else if (value == 'demo_notifications') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const DemoNotificationsPage(),
+                                ),
+                              );
                             } else if (value == 'logout') {
                               _logout();
                             }
@@ -826,6 +839,10 @@ class _TrackingPageState extends State<TrackingPage> {
                             PopupMenuItem(
                               value: 'settings',
                               child: Text(context.t('settings')),
+                            ),
+                            PopupMenuItem(
+                              value: 'demo_notifications',
+                              child: Text(context.t('demo_notifications')),
                             ),
                             PopupMenuItem(
                               value: 'logout',
@@ -845,7 +862,7 @@ class _TrackingPageState extends State<TrackingPage> {
                             context,
                             label: context.t('todays_dose'),
                             value:
-                                '${_getCompletedMedications()}/${_getTotalMedications()}',
+                                convertArabicToWesternNumbers('${_getCompletedMedications()}/${_getTotalMedications()}'),
                             icon: Icons.check_circle_outline,
                             color: Colors.teal,
                           ),
@@ -855,7 +872,7 @@ class _TrackingPageState extends State<TrackingPage> {
                           child: _buildMetricCard(
                             context,
                             label: context.t('current_streak'),
-                            value: '${_streak}d',
+                            value: convertArabicToWesternNumbers('${_streak}d'),
                             icon: Icons.local_fire_department_outlined,
                             color: Colors.orange,
                           ),
@@ -939,7 +956,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 child: _buildHeroStat(
                   context,
                   label: context.t('day'),
-                  value: '${_getDaysIntoTreatment()}',
+                  value: convertArabicToWesternNumbers('${_getDaysIntoTreatment()}'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -947,7 +964,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 child: _buildHeroStat(
                   context,
                   label: context.t('days_left'),
-                  value: '${_getDaysLeft()}',
+                  value: convertArabicToWesternNumbers('${_getDaysLeft()}'),
                 ),
               ),
             ],
@@ -1144,7 +1161,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 child: FilledButton.icon(
                   onPressed: () => _saveDoseLog(true),
                   icon: const Icon(Icons.check_circle_outline),
-                  label: Text(context.t('mark_taken')),
+                  label: Text(context.t('mark_taken'), style: TextStyle(fontWeight: FontWeight.bold)),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.green,
@@ -1357,7 +1374,6 @@ class _TrackingPageState extends State<TrackingPage> {
     );
   }
 }
-
 
 
 

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/screens/doctor/models.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/notification_service.dart';
 import 'patient_home.dart';
@@ -296,7 +297,10 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
   }
 
   String _getTodayDate() {
-    return DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now());
+    final locale = Localizations.localeOf(context).toString();
+    return convertArabicToWesternNumbers(
+      DateFormat('EEEE, MMMM d, yyyy', locale).format(DateTime.now()),
+    );
   }
 
   @override
@@ -487,7 +491,7 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
                 child: FilledButton.icon(
                   onPressed: () => _saveDoseLog(true),
                   icon: const Icon(Icons.check_circle_outline),
-                  label: Text(context.t('mark_taken')),
+                  label: Text(context.t('mark_taken'), style: TextStyle(fontWeight: FontWeight.bold)),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.green,

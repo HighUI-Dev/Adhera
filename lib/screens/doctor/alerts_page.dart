@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 
 import 'models.dart';
 import 'patient_detail.dart';
@@ -20,7 +21,7 @@ class _AlertsPageState extends State<AlertsPage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
-          'Patient Alerts',
+          'Alertes patients',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -37,7 +38,7 @@ class _AlertsPageState extends State<AlertsPage> {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('Erreur: ${snapshot.error}'));
         }
 
         final alertData = snapshot.data ??
@@ -80,14 +81,14 @@ class _AlertsPageState extends State<AlertsPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No alerts',
+                        'Aucune alerte',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'All patients are on track',
+                        'Tous les patients sont à jour',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
@@ -110,9 +111,9 @@ class _AlertsPageState extends State<AlertsPage> {
               if (missedDosesAlerts.isNotEmpty) ...[
                 _buildSectionHeader(
                   context,
-                  title: 'Missed Doses - Last 7 Days',
+                  title: 'Doses manquées - 7 derniers jours',
                   subtitle:
-                      '${missedDosesAlerts.length} patient${missedDosesAlerts.length > 1 ? 's' : ''} need immediate attention',
+                      '${convertArabicToWesternNumbers('${missedDosesAlerts.length}')} patient${missedDosesAlerts.length > 1 ? 's' : ''} nécessitent une attention immédiate',
                   color: Colors.red,
                 ),
                 ...missedDosesAlerts.map(
@@ -134,9 +135,9 @@ class _AlertsPageState extends State<AlertsPage> {
               if (lowAdherenceAlerts.isNotEmpty) ...[
                 _buildSectionHeader(
                   context,
-                  title: 'Low Adherence - Overall Treatment',
+                  title: 'Faible observance - traitement global',
                   subtitle:
-                      '${lowAdherenceAlerts.length} patient${lowAdherenceAlerts.length > 1 ? 's' : ''} below 80% adherence',
+                      '${convertArabicToWesternNumbers('${lowAdherenceAlerts.length}')} patient${lowAdherenceAlerts.length > 1 ? 's' : ''} sous 80% d’observance',
                   color: Colors.orange,
                 ),
                 ...lowAdherenceAlerts.map(
@@ -213,7 +214,7 @@ class _AlertsPageState extends State<AlertsPage> {
       for (final patientDoc in patientsSnapshot.docs) {
         final patientId = patientDoc.id;
         final patientData = patientDoc.data();
-        final patientName = patientData['name'] ?? 'Unknown';
+        final patientName = patientData['name'] ?? 'Inconnu';
 
         final doseLogsSnapshot = await _firestore
             .collection('users')
@@ -235,7 +236,7 @@ class _AlertsPageState extends State<AlertsPage> {
               patientName: patientName,
               alertType: 'missed_doses',
               message:
-                  '$missedThisWeek missed dose${missedThisWeek > 1 ? 's' : ''} this week',
+                  '${convertArabicToWesternNumbers('$missedThisWeek')} dose${missedThisWeek > 1 ? 's' : ''} manquée${missedThisWeek > 1 ? 's' : ''} cette semaine',
               value: missedThisWeek.toDouble(),
               timestamp: DateTime.now(),
             ),
@@ -249,7 +250,7 @@ class _AlertsPageState extends State<AlertsPage> {
               patientName: patientName,
               alertType: 'low_adherence',
               message:
-                  'Overall adherence at ${adherence.toStringAsFixed(0)}%',
+                  'Observance globale à ${convertArabicToWesternNumbers(adherence.toStringAsFixed(0))}%',
               value: adherence,
               timestamp: DateTime.now(),
             ),
@@ -328,7 +329,7 @@ class _AlertCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Tap to view patient details',
+                'Appuyez pour voir les détails du patient',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'models.dart';
 
@@ -14,7 +15,6 @@ class PatientDetailPage extends StatefulWidget {
   @override
   State<PatientDetailPage> createState() => _PatientDetailPageState();
 }
-
 class _PatientDetailPageState extends State<PatientDetailPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime? _patientTreatmentStart;
@@ -22,14 +22,16 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
 
   String _formatLocalizedAppointmentDate(DateTime dateTime) {
     final locale = Localizations.localeOf(context).toString();
-    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
+    return convertArabicToWesternNumbers(
+      DateFormat.yMMMd(locale).add_jm().format(dateTime),
+    );
   }
 
   Future<void> _callPatient() async {
     if (_patientPhoneNumber == null || _patientPhoneNumber!.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Phone number not available')),
+          const SnackBar(content: Text('Numéro de téléphone indisponible')),
         );
       }
       return;
@@ -46,14 +48,14 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch phone app')),
+            const SnackBar(content: Text('Impossible d’ouvrir l’application téléphone')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Erreur: $e')),
         );
       }
     }
@@ -64,18 +66,18 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Patient Details',
+          'Détails du patient',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           if (_patientPhoneNumber != null && _patientPhoneNumber!.isNotEmpty)
             IconButton(
-              tooltip: 'Call patient',
+              tooltip: 'Appeler le patient',
               onPressed: _callPatient,
               icon: const FaIcon(FontAwesomeIcons.phone, size: 20),
             ),
           IconButton(
-            tooltip: 'Add appointment',
+            tooltip: 'Ajouter un rendez-vous',
             onPressed: _showAddAppointmentDialog,
             icon: const FaIcon(FontAwesomeIcons.calendarPlus, size: 20),
           ),
@@ -85,7 +87,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
         future: _firestore.collection('users').doc(widget.patientUid).get(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Erreur: ${snapshot.error}'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -93,7 +95,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           }
 
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('Patient not found'));
+            return const Center(child: Text('Patient introuvable'));
           }
 
           final patientData = PatientData.fromMap(
@@ -193,14 +195,14 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Patient ID: ${patient.id}',
+                      'ID patient : ${patient.id}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimaryContainer.withOpacity(0.78),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Phone: ${patient.phoneNumber?.isNotEmpty ?? false ? patient.phoneNumber : 'Unavailable'}',
+                      'Téléphone : ${patient.phoneNumber?.isNotEmpty ?? false ? patient.phoneNumber : 'Indisponible'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimaryContainer.withOpacity(0.78),
                       ),
@@ -224,8 +226,8 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildMetricBox(
-                  'Days in Treatment',
-                  '${DateTime.now().difference(patient.treatmentStartDate).inDays}',
+                  'Jours de traitement',
+                  convertArabicToWesternNumbers('${DateTime.now().difference(patient.treatmentStartDate).inDays}'),
                   Colors.green,
                   isHero: true,
                 ),
@@ -305,7 +307,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Key Metrics',
+              'Indicateurs clés',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
@@ -323,12 +325,12 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Adherence',
+                            'Observance',
                             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${adherence.toStringAsFixed(1)}%',
+                            convertArabicToWesternNumbers('${adherence.toStringAsFixed(1)}%'),
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -363,12 +365,12 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Current Streak',
+                            'Série actuelle',
                             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '$streak',
+                            convertArabicToWesternNumbers('$streak'),
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -377,7 +379,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'days',
+                            'jours',
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                           ),
                         ],
@@ -402,12 +404,12 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Missed Doses',
+                            'Doses manquées au total',
                             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '$totalMissed',
+                            convertArabicToWesternNumbers('$totalMissed'),
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -422,12 +424,12 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Missed This Week',
+                            'Manquées cette semaine',
                             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '$missedThisWeek',
+                            convertArabicToWesternNumbers('$missedThisWeek'),
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -452,7 +454,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Dose Tracking - 180 days',
+          'Suivi des doses - 180 jours',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
@@ -485,59 +487,54 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Dose Taken', style: TextStyle(fontSize: 12)),
-                ],
-              ),
+            _buildDoseLegendItem(
+              color: Colors.green,
+              label: 'Dose prise',
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Dose Missed', style: TextStyle(fontSize: 12)),
-                ],
-              ),
+            _buildDoseLegendItem(
+              color: Colors.red,
+              label: 'Dose manquée',
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Not yet', style: TextStyle(fontSize: 12)),
-                ],
-              ),
+            _buildDoseLegendItem(
+              color: Colors.grey,
+              label: 'Pas encore',
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDoseLegendItem({
+    required Color color,
+    required String label,
+  }) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 110),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -611,7 +608,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  DateFormat('dd MMM yyyy').format(item.recordedAt),
+                                  convertArabicToWesternNumbers(DateFormat('dd MMM yyyy').format(item.recordedAt)),
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 if (delta != null)
@@ -655,7 +652,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
   Widget _build180DayCalendar(List<DoseLogData> doseLogs) {
     final treatmentStart = _patientTreatmentStart;
     if (treatmentStart == null) {
-      return const Center(child: Text('Treatment start date not available'));
+      return const Center(child: Text('Date de début du traitement indisponible'));
     }
 
     final today = DateTime.now();
@@ -738,7 +735,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Current Medications',
+              'Médicaments en cours',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(width: 8),
@@ -770,7 +767,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'No medications',
+                    'Aucun médicament',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -790,7 +787,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'No active medications in timeframe',
+                    'Aucun médicament actif sur cette période',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -850,20 +847,20 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         if (medication.notes.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           Text(
-                            'Notes: ${medication.notes}',
+                            'Notes : ${medication.notes}',
                             style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                           ),
                         ],
                         const SizedBox(height: 8),
                         Text(
-                          'Started: ${DateFormat('MMM dd, yyyy').format(medication.startDate)}',
+                          'Début : ${convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(medication.startDate))}',
                           style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                         ),
                         if (medication.endDate != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'Ends: ${DateFormat('MMM dd, yyyy').format(medication.endDate!)}',
+                              'Fin : ${convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(medication.endDate!))}',
                               style: TextStyle(fontSize: 11, color: Colors.orange[600]),
                             ),
                           ),
@@ -884,7 +881,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Symptom Entries',
+          'Entrées de symptômes',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
@@ -906,7 +903,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'No symptom entries',
+                    'Aucune entrée de symptôme',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -933,7 +930,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         Row(
                           children: [
                             Text(
-                              DateFormat('dd MMM yyyy').format(symptom.date).toString(),
+                              convertArabicToWesternNumbers(DateFormat('dd MMM yyyy').format(symptom.date).toString()),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const Spacer(),
@@ -944,7 +941,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                '${symptom.severity}/10 - $severityLabel',
+                                convertArabicToWesternNumbers('${symptom.severity}/10 - $severityLabel'),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -959,7 +956,10 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                           spacing: 8,
                           children: symptom.symptoms.map((s) {
                             return Chip(
-                              label: Text(s, style: const TextStyle(fontSize: 12)),
+                              label: Text(
+                                _translateSymptomName(s),
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               backgroundColor: Colors.grey[200],
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(999),
@@ -970,7 +970,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         if (symptom.notes.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Notes: ${symptom.notes}',
+                            'Notes : ${symptom.notes}',
                             style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                           ),
                         ],
@@ -991,7 +991,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Appointments',
+          'Rendez-vous',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
@@ -1012,7 +1012,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'No appointments scheduled',
+                    'Aucun rendez-vous prévu',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -1064,10 +1064,10 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                               ),
                               child: Text(
                                 isPast
-                                    ? 'Past'
+                                    ? 'Passé'
                                     : appointment.addedToCalendar
-                                        ? 'In calendar'
-                                        : 'Pending calendar',
+                                        ? 'Dans le calendrier'
+                                        : 'En attente dans le calendrier',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -1138,9 +1138,42 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
   }
 
   String _getSeverityLabel(int severity) {
-    if (severity <= 3) return 'Mild';
-    if (severity <= 6) return 'Moderate';
-    return 'Severe';
+    if (severity <= 3) return 'Léger';
+    if (severity <= 6) return 'Modéré';
+    return 'Sévère';
+  }
+
+  String _translateSymptomName(String symptom) {
+    final normalized = symptom.trim().toLowerCase();
+    const mapping = <String, String>{
+      'nausea': 'nausea',
+      'cough': 'cough',
+      'vomiting': 'vomiting',
+      'fever': 'fever',
+      'fatigue': 'fatigue',
+      'chest pain': 'chest_pain',
+      'shortness of breath': 'shortness_of_breath',
+      'night sweats': 'night_sweats',
+      'غثيان': 'nausea',
+      'سعال': 'cough',
+      'قيء': 'vomiting',
+      'حمى': 'fever',
+      'إرهاق': 'fatigue',
+      'ألم في الصدر': 'chest_pain',
+      'ضيق في التنفس': 'shortness_of_breath',
+      'تعرق ليلي': 'night_sweats',
+      'nausée': 'nausea',
+      'toux': 'cough',
+      'vomissement': 'vomiting',
+      'fièvre': 'fever',
+      'douleur thoracique': 'chest_pain',
+      'essoufflement': 'shortness_of_breath',
+      'sueurs nocturnes': 'night_sweats',
+    };
+
+    final key = mapping[normalized] ?? normalized.replaceAll(' ', '_');
+    final translated = context.t(key);
+    return translated == key ? symptom : translated;
   }
 }
 
@@ -1167,7 +1200,9 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
 
   String _formatLocalizedAppointmentDate(DateTime dateTime) {
     final locale = Localizations.localeOf(context).toString();
-    return DateFormat.yMMMd(locale).add_jm().format(dateTime);
+    return convertArabicToWesternNumbers(
+      DateFormat.yMMMd(locale).add_jm().format(dateTime),
+    );
   }
 
   @override
@@ -1216,7 +1251,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
 
     if (_selectedDateTime.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a future date and time')),
+        const SnackBar(content: Text('Veuillez choisir une date et une heure futures')),
       );
       return;
     }
@@ -1243,13 +1278,13 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appointment added')),
+          const SnackBar(content: Text('Rendez-vous ajouté')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add appointment: $e')),
+          SnackBar(content: Text('Échec de l’ajout du rendez-vous : $e')),
         );
       }
     } finally {
@@ -1277,7 +1312,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Add Appointment',
+                'Ajouter un rendez-vous',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -1286,13 +1321,13 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Titre',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
                 validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'Title is required' : null,
+                    value == null || value.trim().isEmpty ? 'Le titre est requis' : null,
               ),
               const SizedBox(height: 12),
               InkWell(
@@ -1300,7 +1335,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
                 onTap: _pickDateTime,
                 child: InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Date & time',
+                    labelText: 'Date et heure',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -1331,7 +1366,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
                 children: [
                   TextButton(
                     onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -1342,7 +1377,7 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Save'),
+                        : const Text('Enregistrer'),
                   ),
                 ],
               ),
@@ -1425,12 +1460,12 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Delete Medication'),
-        content: const Text('Are you sure you want to delete this medication?'),
+        title: const Text('Supprimer le médicament'),
+        content: const Text('Voulez-vous vraiment supprimer ce médicament ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Annuler'),
           ),
           TextButton(
             onPressed: () async {
@@ -1447,7 +1482,7 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
                 });
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -1469,7 +1504,7 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Edit Medications',
+                  'Modifier les médicaments',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
@@ -1490,7 +1525,7 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(
                       child: Text(
-                        'No medications',
+                        'Aucun médicament',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     );
@@ -1541,7 +1576,7 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
               child: ElevatedButton.icon(
                 onPressed: _showAddMedicationDialog,
                 icon: const Icon(Icons.add),
-                label: const Text('Add Medication'),
+                label: const Text('Ajouter un médicament'),
               ),
             ),
           ],
@@ -1585,11 +1620,11 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
   }
 
   void _saveMedication() async {
-    if (_nameController.text.isEmpty ||
+      if (_nameController.text.isEmpty ||
         _dosageController.text.isEmpty ||
         _frequencyController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields')),
+        const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
       );
       return;
     }
@@ -1619,7 +1654,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Erreur: $e')),
         );
       }
     }
@@ -1641,7 +1676,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Add Medication',
+                    'Ajouter un médicament',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -1654,7 +1689,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Medication Name *',
+                  labelText: 'Nom du médicament *',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1663,7 +1698,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                 controller: _dosageController,
                 decoration: const InputDecoration(
                   labelText: 'Dosage *',
-                  hintText: 'e.g., 250mg',
+                  hintText: 'ex. 250 mg',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1671,8 +1706,8 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
               TextField(
                 controller: _frequencyController,
                 decoration: const InputDecoration(
-                  labelText: 'Frequency *',
-                  hintText: 'e.g., Twice Daily',
+                  labelText: 'Fréquence *',
+                  hintText: 'ex. deux fois par jour',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1693,7 +1728,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Start Date: ${DateFormat('MMM dd, yyyy').format(_startDate)}',
+                          'Date de début : ${convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(_startDate))}',
                           style: const TextStyle(fontSize: 12),
                         ),
                         TextButton(
@@ -1708,7 +1743,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                               setState(() => _startDate = date);
                             }
                           },
-                          child: const Text('Change'),
+                          child: const Text('Modifier'),
                         ),
                       ],
                     ),
@@ -1718,7 +1753,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'End Date: ${_endDate == null ? 'None' : DateFormat('MMM dd, yyyy').format(_endDate!)}',
+                          'Date de fin : ${_endDate == null ? 'Aucune' : convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(_endDate!))}',
                           style: const TextStyle(fontSize: 12),
                         ),
                         TextButton(
@@ -1733,7 +1768,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                               setState(() => _endDate = date);
                             }
                           },
-                          child: const Text('Set'),
+                          child: const Text('Définir'),
                         ),
                       ],
                     ),
@@ -1746,7 +1781,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -1815,7 +1850,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
         _dosageController.text.isEmpty ||
         _frequencyController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields')),
+        const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
       );
       return;
     }
@@ -1846,7 +1881,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Erreur: $e')),
         );
       }
     }
@@ -1868,7 +1903,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Edit Medication',
+                    'Modifier le médicament',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -1881,7 +1916,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Medication Name *',
+                  labelText: 'Nom du médicament *',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1890,7 +1925,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                 controller: _dosageController,
                 decoration: const InputDecoration(
                   labelText: 'Dosage *',
-                  hintText: 'e.g., 250mg',
+                  hintText: 'ex. 250 mg',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1898,8 +1933,8 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
               TextField(
                 controller: _frequencyController,
                 decoration: const InputDecoration(
-                  labelText: 'Frequency *',
-                  hintText: 'e.g., Twice Daily',
+                  labelText: 'Fréquence *',
+                  hintText: 'ex. deux fois par jour',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1920,7 +1955,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Start Date: ${DateFormat('MMM dd, yyyy').format(_startDate)}',
+                          'Date de début : ${convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(_startDate))}',
                           style: const TextStyle(fontSize: 12),
                         ),
                         TextButton(
@@ -1935,7 +1970,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                               setState(() => _startDate = date);
                             }
                           },
-                          child: const Text('Change'),
+                          child: const Text('Modifier'),
                         ),
                       ],
                     ),
@@ -1945,7 +1980,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'End Date: ${_endDate == null ? 'None' : DateFormat('MMM dd, yyyy').format(_endDate!)}',
+                          'Date de fin : ${_endDate == null ? 'Aucune' : convertArabicToWesternNumbers(DateFormat('MMM dd, yyyy').format(_endDate!))}',
                           style: const TextStyle(fontSize: 12),
                         ),
                         TextButton(
@@ -1960,7 +1995,7 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                               setState(() => _endDate = date);
                             }
                           },
-                          child: const Text('Set'),
+                          child: const Text('Définir'),
                         ),
                       ],
                     ),
@@ -1973,12 +2008,12 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: _updateMedication,
-                    child: const Text('Update'),
+                    child: const Text('Mettre à jour'),
                   ),
                 ],
               ),
@@ -1989,4 +2024,3 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
     );
   }
 }
-

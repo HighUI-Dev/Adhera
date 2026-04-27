@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:adhera/firebase_options.dart';
 import 'package:adhera/screens/auth/auth_page.dart';
 import 'package:adhera/screens/patient/patient_home.dart';
 import 'package:adhera/screens/doctor/doctor_dashboard.dart';
 import 'package:adhera/services/notification_service.dart';
 import 'package:adhera/services/locale_provider.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.instance.initialize();
   await LocaleProvider().loadSavedLocale();
@@ -79,7 +93,8 @@ class _MainAppState extends State<MainApp> {
       debugShowCheckedModeBanner: false,
       locale: _localeProvider.locale,
       supportedLocales: const [Locale('en'), Locale('fr'), Locale('ar')],
-      localizationsDelegates: const [
+      localizationsDelegates: [
+        const ArabicMaterialLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -87,6 +102,9 @@ class _MainAppState extends State<MainApp> {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        primaryTextTheme: GoogleFonts.poppinsTextTheme(),
+        fontFamily: GoogleFonts.poppins().fontFamily,
       ),
       initialRoute: widget.initialRoute,
       routes: {

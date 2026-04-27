@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 import 'package:adhera/services/localization_service.dart';
 
 class SymptomsPage extends StatefulWidget {
@@ -12,6 +13,10 @@ class SymptomsPage extends StatefulWidget {
 }
 
 class _SymptomsPageState extends State<SymptomsPage> {
+  bool _isArabicLocale(BuildContext context) {
+    return Localizations.localeOf(context).languageCode == 'ar';
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -48,11 +53,16 @@ class _SymptomsPageState extends State<SymptomsPage> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 24),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: _isArabicLocale(context)
+                                ? CrossAxisAlignment.center
+                                : CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 16),
                               Text(
                                 context.t('symptoms'),
+                                textAlign: _isArabicLocale(context)
+                                    ? TextAlign.center
+                                    : TextAlign.start,
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -60,6 +70,9 @@ class _SymptomsPageState extends State<SymptomsPage> {
                               const SizedBox(height: 4),
                               Text(
                                 '${logs.length} ${logs.length == 1 ? context.t('entry') : context.t('entries')}',
+                                textAlign: _isArabicLocale(context)
+                                    ? TextAlign.center
+                                    : TextAlign.start,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -103,67 +116,76 @@ class _SymptomsPageState extends State<SymptomsPage> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            context.t('symptoms'),
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            context.t('no_entries_yet'),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Card(
-            elevation: 0,
-            color: colorScheme.surfaceContainerHighest.withOpacity(0.55),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      Icons.health_and_safety_outlined,
-                      size: 32,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.t('no_symptoms_logged_yet'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.t('tap_add_to_record_symptoms'),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+      child: Align(
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                context.t('symptoms'),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                context.t('no_entries_yet'),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                elevation: 0,
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.55),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.health_and_safety_outlined,
+                          size: 32,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        context.t('no_symptoms_logged_yet'),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.t('tap_add_to_record_symptoms'),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -178,7 +200,12 @@ class _SymptomsPageState extends State<SymptomsPage> {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final dateStr = DateFormat('MMM d, yyyy').format(date);
+    final dateStr = convertArabicToWesternNumbers(
+      DateFormat(
+        'MMM d, yyyy',
+        Localizations.localeOf(context).toString(),
+      ).format(date),
+    );
     final severityColor = _getSeverityColor(severity);
     final severityLabel = _getSeverityLabel(severity);
 
@@ -238,7 +265,7 @@ class _SymptomsPageState extends State<SymptomsPage> {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                '$severity/10 - $severityLabel',
+                convertArabicToWesternNumbers('$severity/10 - $severityLabel'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: severityColor,
@@ -450,7 +477,10 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      DateFormat('MMM d, yyyy').format(selectedDate),
+                      convertArabicToWesternNumbers(DateFormat(
+                        'MMM d, yyyy',
+                        Localizations.localeOf(context).toString(),
+                      ).format(selectedDate)),
                       style: theme.textTheme.bodyMedium,
                     ),
                     Icon(
@@ -508,7 +538,7 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('$severity/10'),
+                    Text(convertArabicToWesternNumbers('$severity/10')),
                     Text(
                       _getSeverityLabel(severity),
                       style: theme.textTheme.bodyMedium?.copyWith(

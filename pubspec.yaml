@@ -21,6 +21,7 @@ dependencies:
   fluttertoast: ^9.0.0
   font_awesome_flutter: ^11.0.0
   gpassword: ^1.0.0
+  google_fonts: ^8.0.2
   intl: ^0.20.2
   progress_circle: ^1.2.0
   shared_preferences: ^2.5.3

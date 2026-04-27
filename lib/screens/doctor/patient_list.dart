@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gpassword/gpassword.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 import 'models.dart';
 import 'patient_detail.dart';
 
@@ -11,7 +12,6 @@ class PatientListPage extends StatefulWidget {
   @override
   State<PatientListPage> createState() => _PatientListPageState();
 }
-
 class _PatientListPageState extends State<PatientListPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,14 +25,14 @@ class _PatientListPageState extends State<PatientListPage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
-          'Assigned Patients',
+          'Patients attribués',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: _buildPatientList(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddPatientDialog(),
-        tooltip: 'Add Patient',
+        tooltip: 'Ajouter un patient',
         child: const Icon(Icons.add),
       ),
     );
@@ -46,7 +46,7 @@ class _PatientListPageState extends State<PatientListPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('Erreur: ${snapshot.error}'));
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -85,7 +85,7 @@ class _PatientListPageState extends State<PatientListPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No assigned patients',
+                        'Aucun patient attribué',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -118,14 +118,14 @@ class _PatientListPageState extends State<PatientListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Patient Overview',
+                        'Aperçu des patients',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${patients.length} patient${patients.length == 1 ? '' : 's'} currently assigned',
+                          '${convertArabicToWesternNumbers('${patients.length}')} patient${patients.length == 1 ? '' : 's'} actuellement attribué${patients.length == 1 ? '' : 's'}',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -169,7 +169,7 @@ class _PatientListPageState extends State<PatientListPage> {
     ).then((result) {
       if (result == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Patient added successfully')),
+          const SnackBar(content: Text('Patient ajouté avec succès')),
         );
       }
     });
@@ -318,7 +318,7 @@ class _PatientCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Adherence',
+                              'Observance',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -326,7 +326,7 @@ class _PatientCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '${adherence.toStringAsFixed(0)}%',
+                              convertArabicToWesternNumbers('${adherence.toStringAsFixed(0)}%'),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -359,7 +359,7 @@ class _PatientCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Streak',
+                              'Série',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -367,7 +367,7 @@ class _PatientCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '$streak days',
+                              '${convertArabicToWesternNumbers('$streak')} jours',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -408,7 +408,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
   late TextEditingController _weightController;
   late TextEditingController _phoneController;
 
-  String _selectedSex = 'Male';
+  String _selectedSex = 'Homme';
   DateTime _selectedStartDate = DateTime.now();
   List<Medication> _medications = [];
   bool _isLoading = false;
@@ -463,7 +463,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Add New Patient',
+                'Ajouter un nouveau patient',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 24),
@@ -474,19 +474,19 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                     TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(
-                        labelText: 'Email',
+                        labelText: 'E-mail',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
                       validator: (value) =>
-                          value?.isEmpty ?? true ? 'Email required' : null,
+                          value?.isEmpty ?? true ? 'E-mail requis' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: 'Mot de passe',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -503,38 +503,38 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                                 () => _showPassword = !_showPassword,
                               ),
                               tooltip: _showPassword
-                                  ? 'Hide password'
-                                  : 'Show password',
+                                  ? 'Masquer le mot de passe'
+                                  : 'Afficher le mot de passe',
                             ),
                             IconButton(
                               icon: const Icon(Icons.refresh),
                               onPressed: _generatePassword,
-                              tooltip: 'Generate 8-digit password',
+                              tooltip: 'Générer un mot de passe à 8 chiffres',
                             ),
                           ],
                         ),
                       ),
                       obscureText: !_showPassword,
                       validator: (value) =>
-                          (value?.length ?? 0) < 6 ? 'Min 6 characters' : null,
+                          (value?.length ?? 0) < 6 ? '6 caractères minimum' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        labelText: 'Full Name',
+                        labelText: 'Nom complet',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
                       validator: (value) =>
-                          value?.isEmpty ?? true ? 'Name required' : null,
+                          value?.isEmpty ?? true ? 'Nom requis' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _phoneController,
                       decoration: InputDecoration(
-                        labelText: 'Phone Number',
+                        labelText: 'Numéro de téléphone',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -549,7 +549,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                           child: TextFormField(
                             controller: _ageController,
                             decoration: InputDecoration(
-                              labelText: 'Age',
+                              labelText: 'Âge',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
@@ -562,12 +562,12 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                           child: DropdownButtonFormField<String>(
                             value: _selectedSex,
                             decoration: InputDecoration(
-                              labelText: 'Sex',
+                              labelText: 'Sexe',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
                             ),
-                            items: ['Male', 'Female']
+                            items: ['Homme', 'Femme']
                                 .map(
                                   (s) => DropdownMenuItem(
                                     value: s,
@@ -576,7 +576,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                                 )
                                 .toList(),
                             onChanged: (value) =>
-                                setState(() => _selectedSex = value ?? 'Male'),
+                                setState(() => _selectedSex = value ?? 'Homme'),
                           ),
                         ),
                       ],
@@ -585,7 +585,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                     TextFormField(
                       controller: _weightController,
                       decoration: InputDecoration(
-                        labelText: 'Weight (kg)',
+                        labelText: 'Poids (kg)',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -601,7 +601,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                           .colorScheme
                           .surfaceContainerHighest
                           .withOpacity(0.45),
-                      title: const Text('Treatment Start Date'),
+                      title: const Text('Date de début du traitement'),
                       subtitle: Text(_selectedStartDate.toString().split(' ')[0]),
                       onTap: () => _selectDate(),
                       trailing: const Icon(Icons.calendar_today_outlined),
@@ -611,7 +611,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Medications',
+                          'Médicaments',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         IconButton(
@@ -648,7 +648,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Text(
-                          'No medications added yet',
+                          'Aucun médicament ajouté pour le moment',
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ),
@@ -661,7 +661,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 12),
                   FilledButton(
@@ -672,7 +672,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Add Patient'),
+                        : const Text('Ajouter un patient'),
                   ),
                 ],
               ),
@@ -811,7 +811,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Add Medication',
+                'Ajouter un médicament',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 24),
@@ -822,7 +822,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                     FormField<String>(
                       initialValue: _nameController.text,
                       validator: (value) => (value == null || value.isEmpty)
-                          ? 'Medication name required'
+                          ? 'Nom du médicament requis'
                           : null,
                       builder: (FormFieldState<String> field) {
                         return Column(
@@ -864,7 +864,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                                       controller: controller,
                                       focusNode: focusNode,
                                       decoration: InputDecoration(
-                                        labelText: 'Medication Name',
+                                        labelText: 'Nom du médicament',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(18),
                                         ),
@@ -898,19 +898,19 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                     TextFormField(
                       controller: _dosageController,
                       decoration:  InputDecoration(
-                        labelText: 'Dosage (e.g., 300 mg)',
+                        labelText: 'Dosage (ex. 300 mg)',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
                       validator: (value) =>
-                          value?.isEmpty ?? true ? 'Dosage required' : null,
+                          value?.isEmpty ?? true ? 'Dosage requis' : null,
                     ),
                     const SizedBox(height: 12),
                     FormField<String>(
                       initialValue: _frequencyController.text,
                       validator: (value) => _frequencyController.text.isEmpty
-                          ? 'Frequency required'
+                          ? 'Fréquence requise'
                           : null,
                       builder: (FormFieldState<String> field) {
                         return Column(
@@ -925,18 +925,18 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                                 final input = textEditingValue.text
                                     .toLowerCase();
                                 const commonFrequencies = [
-                                  '1x/day',
-                                  '2x/day',
-                                  '3x/day',
-                                  '4x/day',
-                                  'Once daily',
-                                  'Twice daily',
-                                  'Three times daily',
+                                  '1 fois/jour',
+                                  '2 fois/jour',
+                                  '3 fois/jour',
+                                  '4 fois/jour',
+                                  'Une fois par jour',
+                                  'Deux fois par jour',
+                                  'Trois fois par jour',
                                 ];
 
                                 // If input is a number, suggest number + x/day
                                 if (RegExp(r'^\d+$').hasMatch(input)) {
-                                  return ['${input}x/day'];
+                                  return ['${input} fois/jour'];
                                 }
 
                                 // Otherwise filter common frequencies
@@ -963,7 +963,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                                       controller: controller,
                                       focusNode: focusNode,
                                       decoration: InputDecoration(
-                                        labelText: 'Frequency (e.g., 1x/day)',
+                                        labelText: 'Fréquence (ex. 1 fois/jour)',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(18),
                                         ),
@@ -996,7 +996,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                     TextFormField(
                       controller: _notesController,
                       decoration: InputDecoration(
-                        labelText: 'Notes (optional)',
+                        labelText: 'Notes (facultatives)',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -1012,11 +1012,11 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                           .colorScheme
                           .surfaceContainerHighest
                           .withOpacity(0.45),
-                      title: const Text('Start Date'),
+                      title: const Text('Date de début'),
                       subtitle: Text(
                         _selectedStartDate != null
                             ? _selectedStartDate.toString().split(' ')[0]
-                            : 'No date selected',
+                            : 'Aucune date sélectionnée',
                       ),
                       onTap: _selectStartDate,
                       trailing: const Icon(Icons.calendar_today),
@@ -1030,11 +1030,11 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                           .colorScheme
                           .surfaceContainerHighest
                           .withOpacity(0.45),
-                      title: const Text('End Date (Optional)'),
+                      title: const Text('Date de fin (facultative)'),
                       subtitle: Text(
                         _selectedEndDate != null
                             ? _selectedEndDate.toString().split(' ')[0]
-                            : 'No end date',
+                            : 'Aucune date de fin',
                       ),
                       onTap: _selectEndDate,
                       trailing: const Icon(Icons.calendar_today),
@@ -1048,12 +1048,12 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 12),
                   FilledButton(
                     onPressed: _addMedication,
-                    child: const Text('Add'),
+                    child: const Text('Ajouter'),
                   ),
                 ],
               ),

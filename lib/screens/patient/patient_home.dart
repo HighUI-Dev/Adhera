@@ -89,7 +89,7 @@ class _PatientHomeState extends State<PatientHome> with WidgetsBindingObserver {
             ),
             NavigationDestination(
               icon: const Icon(Icons.insights),
-              label: context.t('insights'),
+              label: context.t('statistics'),
             ),
             NavigationDestination(
               icon: const Icon(Icons.person_rounded),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 import 'package:adhera/services/localization_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -85,8 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: _buildInfoCard(
                               context,
                               label: context.t('sex'),
-                              value: sex?.isNotEmpty == true ? sex! : context.t('not_set'),
-                              icon: Icons.wc_outlined,
+                              value: _formatSex(context, sex),
+                              icon: _sexIcon(sex),
                             ),
                           ),
                         ],
@@ -172,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${context.t('recorded_on')}: ${DateFormat('MMM d, yyyy').format(selectedDate)}',
+                    '${context.t('recorded_on')}: ${convertArabicToWesternNumbers(DateFormat('MMM d, yyyy', Localizations.localeOf(context).toString()).format(selectedDate))}',
                   ),
                   TextButton(
                     onPressed: () async {
@@ -335,7 +336,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Expanded(
                         child: Text(
-                          DateFormat('MMM d, yyyy').format(row.recordedAt),
+                          convertArabicToWesternNumbers(DateFormat(
+                            'MMM d, yyyy',
+                            Localizations.localeOf(context).toString(),
+                          ).format(row.recordedAt)),
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -526,12 +530,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatWeightValue(double value) {
     final hasFraction = value % 1 != 0;
-    return hasFraction ? value.toStringAsFixed(1) : value.toInt().toString();
+    return convertArabicToWesternNumbers(
+      hasFraction ? value.toStringAsFixed(1) : value.toInt().toString(),
+    );
   }
 
   String _formatDate(BuildContext context, dynamic timestamp) {
     if (timestamp is Timestamp) {
-      return DateFormat('MMM d, yyyy').format(timestamp.toDate());
+      return convertArabicToWesternNumbers(DateFormat(
+        'MMM d, yyyy',
+        Localizations.localeOf(context).toString(),
+      ).format(timestamp.toDate()));
     }
     return context.t('not_set');
   }
@@ -543,7 +552,46 @@ class _ProfilePageState extends State<ProfilePage> {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final day = todayDate.difference(startDate).inDays + 1;
-    return day > 0 ? "${context.t('day')} $day${context.t('of_180')}" : context.t('not_started');
+    return day > 0
+        ? convertArabicToWesternNumbers("${context.t('day')} $day${context.t('of_180')}")
+        : context.t('not_started');
+  }
+
+  String _formatSex(BuildContext context, String? sex) {
+    if (sex == null || sex.trim().isEmpty) return context.t('not_set');
+
+    final normalized = sex.trim().toLowerCase();
+    if (normalized == 'male' ||
+        normalized == 'm' ||
+        normalized == 'homme' ||
+        normalized == 'ذكر') {
+      return context.t('sex_male');
+    }
+    if (normalized == 'female' ||
+        normalized == 'f' ||
+        normalized == 'femme' ||
+        normalized == 'أنثى') {
+      return context.t('sex_female');
+    }
+    return sex;
+  }
+
+  IconData _sexIcon(String? sex) {
+    if (sex == null || sex.trim().isEmpty) return Icons.wc_outlined;
+    final normalized = sex.trim().toLowerCase();
+    if (normalized == 'male' ||
+        normalized == 'm' ||
+        normalized == 'homme' ||
+        normalized == 'ذكر') {
+      return Icons.male_rounded;
+    }
+    if (normalized == 'female' ||
+        normalized == 'f' ||
+        normalized == 'femme' ||
+        normalized == 'أنثى') {
+      return Icons.female_rounded;
+    }
+    return Icons.wc_outlined;
   }
 }
 

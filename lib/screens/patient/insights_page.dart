@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/services/localization_service.dart';
+import 'package:adhera/services/arabic_localizations.dart';
 
 class InsightsPage extends StatelessWidget {
   const InsightsPage({super.key});
@@ -62,13 +63,13 @@ class InsightsPage extends StatelessWidget {
                     children: [
                       const SizedBox(height: 16),
                       Text(
-                        context.t('insights'),
+                        context.t('statistics'),
                         style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "${context.t('day')} ${metrics.daysIntoTreatment}${context.t('of_180')}",
+                        "${context.t('day')} ${convertArabicToWesternNumbers('${metrics.daysIntoTreatment}')}${context.t('of_180')}",
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -80,33 +81,33 @@ class InsightsPage extends StatelessWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: 1.05,
+                        childAspectRatio: 0.92,
                         children: [
                           _buildStatCard(
                             context,
                             label: context.t('adherence_30d'),
-                            value: '${metrics.adherence30dPercent}%',
+                            value: convertArabicToWesternNumbers('${metrics.adherence30dPercent}%'),
                             icon: Icons.insights_outlined,
                             color: Colors.blue,
                           ),
                           _buildStatCard(
                             context,
                             label: context.t('overall_adherence'),
-                            value: '${metrics.overallAdherencePercent}%',
+                            value: convertArabicToWesternNumbers('${metrics.overallAdherencePercent}%'),
                             icon: Icons.show_chart_outlined,
                             color: Colors.teal,
                           ),
                           _buildStatCard(
                             context,
                             label: context.t('current_streak'),
-                            value: '${metrics.currentStreak} ${context.t('days')}',
+                            value: convertArabicToWesternNumbers('${metrics.currentStreak}') + ' ${context.t('days')}',
                             icon: Icons.local_fire_department_outlined,
                             color: Colors.orange,
                           ),
                           _buildStatCard(
                             context,
                             label: context.t('missed_doses_30d'),
-                            value: '${metrics.missedDoses30d}',
+                            value: convertArabicToWesternNumbers('${metrics.missedDoses30d}'),
                             icon: Icons.event_busy_outlined,
                             color: Colors.red,
                           ),
@@ -202,19 +203,7 @@ class InsightsPage extends StatelessWidget {
       }
     }
 
-    int streak = 0;
-    for (
-      DateTime day = today;
-      !day.isBefore(effectiveStart);
-      day = day.subtract(const Duration(days: 1))
-    ) {
-      final status = doseStatusByDate[DateFormat('yyyy-MM-dd').format(day)];
-      if (status == true) {
-        streak++;
-      } else {
-        break;
-      }
-    }
+    final streak = _calculateStreakFromLogs(docs);
 
     final total30dDays = _inclusiveDaysBetween(effective30dStart, today);
     final totalTreatmentDays = _inclusiveDaysBetween(effectiveStart, today);
@@ -230,6 +219,33 @@ class InsightsPage extends StatelessWidget {
       missedDoses30d: missed30d,
       daysIntoTreatment: totalTreatmentDays,
     );
+  }
+
+  int _calculateStreakFromLogs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final sortedDocs =
+        docs.where((doc) {
+          final date = doc.data()['date'] as String?;
+          return date != null && date.isNotEmpty;
+        }).toList()
+          ..sort((a, b) {
+            final aDate = a.data()['date'] as String? ?? '';
+            final bDate = b.data()['date'] as String? ?? '';
+            return bDate.compareTo(aDate);
+          });
+
+    int streak = 0;
+    for (final doc in sortedDocs) {
+      final taken = doc.data()['taken'] == true;
+      if (taken) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
   }
 
   Widget _buildStatCard(
@@ -271,7 +287,8 @@ class InsightsPage extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               label,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              softWrap: true,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -320,6 +337,8 @@ class InsightsPage extends StatelessWidget {
                     children: [
                       Text(
                         phaseName,
+                        maxLines: 2,
+                        softWrap: true,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),

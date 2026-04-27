@@ -1,9 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
+import 'package:adhera/services/localization_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -14,6 +15,9 @@ class NotificationService {
 
   static const int _morningReminderId = 1001;
   static const int _eveningReminderId = 1002;
+  static const int _demoDailyReminderId = 2001;
+  static const int _demoMissedDoseAlertId = 2002;
+  static const int _demoMissedDoseFollowupId = 2003;
   static const String _channelId = 'tb_medication_reminders';
   static const String _channelName = 'TB Medication Reminders';
   static const String _channelDescription =
@@ -85,10 +89,12 @@ class NotificationService {
   }
 
   Future<void> _scheduleMorningReminder() async {
+    final content = _dailyReminderContent();
+
     await _scheduleDailyReminder(
       id: _morningReminderId,
-      title: 'Medication Reminder',
-      body: 'Time to take your TB medication.',
+      title: content.title,
+      body: content.body,
       hour: 9,
     );
   }
@@ -102,12 +108,40 @@ class NotificationService {
       return;
     }
 
+    final content = _missedDoseAlertContent();
+
     await _scheduleDailyReminder(
       id: _eveningReminderId,
-      title: 'Evening Check-In',
-      body:
-          'If you have not taken your TB medication today, please take it and mark it as taken.',
+      title: content.title,
+      body: content.body,
       hour: 21,
+    );
+  }
+
+  Future<void> showDailyReminderDemo() async {
+    final content = _dailyReminderContent();
+    await _showInstantNotification(
+      id: _demoDailyReminderId,
+      title: content.title,
+      body: content.body,
+    );
+  }
+
+  Future<void> showMissedDoseAlertDemo() async {
+    final content = _missedDoseAlertContent();
+    await _showInstantNotification(
+      id: _demoMissedDoseAlertId,
+      title: content.title,
+      body: content.body,
+    );
+  }
+
+  Future<void> showMissedDoseFollowupDemo() async {
+    final content = _missedDoseFollowupContent();
+    await _showInstantNotification(
+      id: _demoMissedDoseFollowupId,
+      title: content.title,
+      body: content.body,
     );
   }
 
@@ -231,4 +265,92 @@ class NotificationService {
       'Pending notifications: ${pendingRequests.map((request) => request.id).toList()}',
     );
   }
+
+  Future<void> _showInstantNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) return;
+
+    await initialize();
+    await _notifications.show(id, title, body, _notificationDetails());
+  }
+
+  _NotificationContent _dailyReminderContent() {
+    switch (LocalizationService().locale.languageCode) {
+      case 'fr':
+        return const _NotificationContent(
+          title: 'Il est temps de prendre votre traitement',
+          body:
+              'N’oubliez pas votre traitement antituberculeux aujourd’hui. La régularité est essentielle pour guérir.',
+        );
+      case 'ar':
+        return const _NotificationContent(
+          title: 'Ø­Ø§Ù† ÙˆÙ‚Øª ØªÙ†Ø§ÙˆÙ„ Ø§Ù„Ø¯ÙˆØ§Ø¡',
+          body: 'Ù„Ø§ ØªÙ†Ø³ÙŽ ØªÙ†Ø§ÙˆÙ„ Ø¹Ù„Ø§Ø¬ Ø§Ù„Ø³Ù„ Ø§Ù„ÙŠÙˆÙ…. Ø§Ù„Ø§Ù†ØªØ¸Ø§Ù… Ù…Ù‡Ù… Ø¬Ø¯Ø§Ù‹ Ù„Ù„Ø´ÙØ§Ø¡.',
+        );
+      case 'en':
+      default:
+        return const _NotificationContent(
+          title: 'Time to take your medication',
+          body:
+              'Donâ€™t forget your TB treatment today. Staying consistent is key to recovery.',
+        );
+    }
+  }
+
+  _NotificationContent _missedDoseAlertContent() {
+    switch (LocalizationService().locale.languageCode) {
+      case 'fr':
+        return const _NotificationContent(
+          title: 'Vous n’avez pas encore pris votre traitement',
+          body:
+              'Il n’est pas trop tard. Prendre votre dose aujourd’hui aide à maintenir votre traitement efficace.',
+        );
+      case 'ar':
+        return const _NotificationContent(
+          title: 'Ù„Ù… ØªØªÙ†Ø§ÙˆÙ„ Ø¯ÙˆØ§Ø¡Ùƒ Ø¨Ø¹Ø¯',
+          body: 'Ù„Ø§ ÙŠØ²Ø§Ù„ Ø¨Ø¥Ù…ÙƒØ§Ù†Ùƒ ØªÙ†Ø§ÙˆÙ„Ù‡. Ø£Ø®Ø° Ø§Ù„Ø¬Ø±Ø¹Ø© Ø§Ù„ÙŠÙˆÙ… ÙŠØ³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„Ø§Ø³ØªÙ…Ø±Ø§Ø± ÙÙŠ Ø§Ù„Ø¹Ù„Ø§Ø¬.',
+        );
+      case 'en':
+      default:
+        return const _NotificationContent(
+          title: 'You havenâ€™t taken your medication yet',
+          body:
+              'Itâ€™s not too late. Taking your dose today helps keep your treatment on track.',
+        );
+    }
+  }
+
+  _NotificationContent _missedDoseFollowupContent() {
+    switch (LocalizationService().locale.languageCode) {
+      case 'fr':
+        return const _NotificationContent(
+          title: 'Avez-vous oublié votre dose d’hier ?',
+          body:
+              'L’oubli des doses peut affecter votre guérison. Essayez de rester régulier et prenez votre traitement aujourd’hui.',
+        );
+      case 'ar':
+        return const _NotificationContent(
+          title: 'Ù‡Ù„ ÙØ§ØªØªÙƒ Ø¬Ø±Ø¹Ø© Ø§Ù„Ø£Ù…Ø³ØŸ',
+          body: 'Ù†Ø³ÙŠØ§Ù† Ø§Ù„Ø¬Ø±Ø¹Ø§Øª Ù‚Ø¯ ÙŠØ¤Ø«Ø± Ø¹Ù„Ù‰ Ø§Ù„Ø´ÙØ§Ø¡. Ø­Ø§ÙˆÙ„ Ø§Ù„Ø§Ù„ØªØ²Ø§Ù… ÙˆØªÙ†Ø§ÙˆÙ„ Ø¯ÙˆØ§Ø¡Ùƒ Ø§Ù„ÙŠÙˆÙ….',
+        );
+      case 'en':
+      default:
+        return const _NotificationContent(
+          title: 'Did you miss yesterdayâ€™s dose?',
+          body:
+              'Missing doses can affect your recovery. Try to stay consistent and take todayâ€™s medication.',
+        );
+    }
+  }
 }
+
+class _NotificationContent {
+  const _NotificationContent({required this.title, required this.body});
+
+  final String title;
+  final String body;
+}
+
