@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/screens/doctor/models.dart';
 import 'package:adhera/services/arabic_localizations.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/notification_service.dart';
 import 'patient_home.dart';
@@ -189,6 +190,13 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
   }
 
   Future<void> _saveDoseLog(bool taken) async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -235,6 +243,13 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
   }
 
   Future<void> _revertChoice() async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null && _todayLogId != null) {
@@ -267,10 +282,12 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'useSimpleMode': false});
+        if (!DemoAccessService.isCurrentUserDemo()) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({'useSimpleMode': false});
+        }
       }
     } catch (e) {
       print('Error exiting simple mode: $e');

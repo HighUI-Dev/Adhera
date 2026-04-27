@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:adhera/services/arabic_localizations.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'models.dart';
 
@@ -1249,6 +1250,13 @@ class _AddAppointmentDialogState extends State<AddAppointmentDialog> {
       return;
     }
 
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     if (_selectedDateTime.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez choisir une date et une heure futures')),
@@ -1469,6 +1477,14 @@ class _MedicationEditDialogState extends State<MedicationEditDialog> {
           ),
           TextButton(
             onPressed: () async {
+              if (DemoAccessService.isCurrentUserDemo()) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  DemoAccessService.showReadOnlyMessage(this.context);
+                }
+                return;
+              }
+
               await widget.firestore
                   .collection('users')
                   .doc(widget.patientUid)
@@ -1626,6 +1642,13 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
       );
+      return;
+    }
+
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
       return;
     }
 
@@ -1852,6 +1875,13 @@ class _EditMedicationDialogState extends State<EditMedicationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
       );
+      return;
+    }
+
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
       return;
     }
 

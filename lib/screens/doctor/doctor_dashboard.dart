@@ -4,6 +4,7 @@ import 'patient_list.dart';
 import 'alerts_page.dart';
 import 'profile_page.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 
 class DoctorDashboard extends StatefulWidget {
@@ -78,6 +79,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
+                DemoAccessService.clearDemoSession();
                 await FirebaseAuth.instance.signOut();
                 await NotificationService.instance.cancelMedicationReminders();
                 if (context.mounted) {

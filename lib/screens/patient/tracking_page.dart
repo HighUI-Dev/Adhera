@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/screens/doctor/models.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/notification_service.dart';
 import 'package:adhera/services/arabic_localizations.dart';
@@ -243,6 +244,13 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   Future<void> _saveDoseLog(bool taken) async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -293,6 +301,13 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   Future<void> _revertChoice() async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null && _todayLogId != null) {
@@ -484,7 +499,7 @@ class _TrackingPageState extends State<TrackingPage> {
       }
 
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (user != null && !DemoAccessService.isCurrentUserDemo()) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -546,6 +561,13 @@ class _TrackingPageState extends State<TrackingPage> {
   }
 
   Future<void> _updateYesterdayLog(bool taken) async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -652,6 +674,7 @@ class _TrackingPageState extends State<TrackingPage> {
 
   Future<void> _logout() async {
     try {
+      DemoAccessService.clearDemoSession();
       await FirebaseAuth.instance.signOut();
       await NotificationService.instance.cancelMedicationReminders();
       if (mounted) {
@@ -672,10 +695,12 @@ class _TrackingPageState extends State<TrackingPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'useSimpleMode': enable});
+        if (!DemoAccessService.isCurrentUserDemo()) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({'useSimpleMode': enable});
+        }
 
         if (mounted) {
           setState(() {
@@ -1374,7 +1399,3 @@ class _TrackingPageState extends State<TrackingPage> {
     );
   }
 }
-
-
-
-

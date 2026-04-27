@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/arabic_localizations.dart';
 
 import 'models.dart';
@@ -363,6 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             TextButton(
               onPressed: () async {
+                DemoAccessService.clearDemoSession();
                 await _auth.signOut();
                 await NotificationService.instance.cancelMedicationReminders();
                 if (mounted) {

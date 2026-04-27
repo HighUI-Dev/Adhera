@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/services/arabic_localizations.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -232,6 +233,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveWeight(String uid, double weight, DateTime recordedAt) async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     setState(() {
       _isSavingWeight = true;
     });

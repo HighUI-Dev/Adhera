@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:adhera/services/arabic_localizations.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 
 class SymptomsPage extends StatefulWidget {
@@ -389,6 +390,13 @@ class _SymptomsPageState extends State<SymptomsPage> {
   }
 
   Future<void> _deleteSymptomLog(String docId) async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -630,6 +638,13 @@ class _SymptomEntryDialogState extends State<SymptomEntryDialog> {
   }
 
   Future<void> _saveSymptomLog() async {
+    if (DemoAccessService.isCurrentUserDemo()) {
+      if (mounted) {
+        DemoAccessService.showReadOnlyMessage(context);
+      }
+      return;
+    }
+
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(

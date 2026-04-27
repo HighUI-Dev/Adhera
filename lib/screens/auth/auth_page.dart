@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:adhera/services/notification_service.dart';
+import 'package:adhera/services/demo_access_service.dart';
 import 'package:adhera/services/localization_service.dart';
 import 'package:adhera/services/locale_provider.dart';
 
@@ -73,6 +74,7 @@ class _AuthPageState extends State<AuthPage> {
 
   void _signIn() async {
     if (_formKey.currentState!.validate()) {
+      DemoAccessService.clearDemoSession();
       _signInWithCredentials(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -83,12 +85,19 @@ class _AuthPageState extends State<AuthPage> {
   Future<void> _signInWithCredentials({
     required String email,
     required String password,
+    bool demoSession = false,
   }) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
+      if (demoSession) {
+        DemoAccessService.markDemoSession();
+      } else {
+        DemoAccessService.clearDemoSession();
+      }
+
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
@@ -390,6 +399,7 @@ class _AuthPageState extends State<AuthPage> {
                     : () => _signInWithCredentials(
                           email: 'test@gmail.com',
                           password: 'test@123',
+                          demoSession: true,
                         ),
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
@@ -410,6 +420,7 @@ class _AuthPageState extends State<AuthPage> {
                         : () => _signInWithCredentials(
                               email: 'patient1@gmail.com',
                               password: 'patient1#',
+                              demoSession: true,
                             ),
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -431,6 +442,7 @@ class _AuthPageState extends State<AuthPage> {
                         : () => _signInWithCredentials(
                               email: 'patient2@gmail.com',
                               password: 'patient2#',
+                              demoSession: true,
                             ),
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
