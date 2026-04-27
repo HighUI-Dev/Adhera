@@ -53,12 +53,6 @@ This app focuses on:
 
 ---
 
-## 🖼️ Screenshots
-
-_Add screenshots here (patient dashboard, insights, treatment page)_
-
----
-
 ## ⚠️ Notes
 
 - This is a demonstration project  
