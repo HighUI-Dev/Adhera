@@ -603,7 +603,9 @@ class _TrackingSimpleModeState extends State<TrackingSimpleMode> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${medication.dosage} • ${medication.frequency}',
+              medication.dosage.trim().isNotEmpty
+                  ? '${medication.dosage} • ${medication.frequency}'
+                  : medication.frequency,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),

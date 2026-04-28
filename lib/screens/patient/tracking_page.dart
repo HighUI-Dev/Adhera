@@ -389,7 +389,7 @@ class _TrackingPageState extends State<TrackingPage> {
           .collection('users')
           .doc(user.uid)
           .collection('appointments')
-          .orderBy('dateTime')
+          .orderBy('dateTime', descending: true)
           .get();
 
       final appointments = snapshot.docs
@@ -745,7 +745,7 @@ class _TrackingPageState extends State<TrackingPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final details = <String>[
-      medication.dosage,
+      if (medication.dosage.trim().isNotEmpty) medication.dosage.trim(),
       medication.frequency,
       if (medication.notes.trim().isNotEmpty) medication.notes.trim(),
     ];
